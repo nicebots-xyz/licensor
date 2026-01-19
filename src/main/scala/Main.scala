@@ -237,7 +237,7 @@ object AddCommand extends Command[CommonOptions]:
     if added == 0 then sys.exit(0) else sys.exit(1)
   }
 
-/** Add command entry point.
+/** Version command entry point.
   *
   * @example
   *   {{{
