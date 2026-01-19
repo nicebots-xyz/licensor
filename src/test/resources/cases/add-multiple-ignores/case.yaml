@@ -6,7 +6,7 @@ ignore:
   - "source/vendor/**"
   - "source/build/**"
   - "**/test_*.py"
-expectExit: 0
+expectExit: 1
 expectedOutput:
   - "Added: source/app/main.py"
   - "Skipped: 0"

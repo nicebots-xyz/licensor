@@ -2,8 +2,8 @@ name: add-nested
 command: add
 args:
   - "source/**/*.py"
-ignore: []
-expectExit: 0
+ignore: [ ]
+expectExit: 1
 expectedOutput:
   - "Added: source/a/b/c/deep.py"
   - "Added: source/x/y/file.py"

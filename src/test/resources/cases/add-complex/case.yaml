@@ -5,7 +5,7 @@ args:
 ignore:
   - "source/vendor/**"
   - "source/**/skip.py"
-expectExit: 0
+expectExit: 1
 expectedOutput:
   - "Added: source/app/main.py"
   - "Added: source/app/utils/helper.py"

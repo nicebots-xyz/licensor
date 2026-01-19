@@ -2,8 +2,8 @@ name: add-unchanged
 command: add
 args:
   - "source"
-ignore: []
-expectExit: 1
+ignore: [ ]
+expectExit: 0
 expectedOutput:
   - "Unchanged: source/already.py"
   - "Unchanged: source/correct.py"

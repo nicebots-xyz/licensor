@@ -2,8 +2,8 @@ name: add-range
 command: add
 args:
   - "source/*.py"
-ignore: []
-expectExit: 0
+ignore: [ ]
+expectExit: 1
 expectedOutput:
   - "Added: source/range.py"
   - "Skipped: 0"

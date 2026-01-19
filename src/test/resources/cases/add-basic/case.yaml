@@ -4,7 +4,7 @@ args:
   - "source/*.py"
 ignore:
   - "**/skip.py"
-expectExit: 0
+expectExit: 1
 expectedOutput:
   - "Added: source/one.py"
   - "Skipped: 0"

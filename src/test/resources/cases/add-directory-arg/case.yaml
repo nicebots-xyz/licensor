@@ -2,8 +2,8 @@ name: add-directory-arg
 command: add
 args:
   - "source"
-ignore: []
-expectExit: 0
+ignore: [ ]
+expectExit: 1
 expectedOutput:
   - "Added: source/app.py"
   - "Added: source/utils/helper.py"
