@@ -1,0 +1,10 @@
+name: check-astro-mdx-blank-line
+command: check
+args:
+  - "source/*"
+ignore: []
+expectExit: 1
+expectedOutput:
+  - "Missing: source/one.astro"
+  - "Missing: source/one.mdx"
+  - "Skipped: 0"
