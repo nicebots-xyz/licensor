@@ -91,6 +91,7 @@ jobs:
             4. Run: `licensor --help`
 
             Integrity: download `SHA256SUMS.txt` and verify with `sha256sum -c SHA256SUMS.txt`.
+
             ---
           files: |
             licensor-${{ github.ref_name }}-linux-x86_64.tar.gz
