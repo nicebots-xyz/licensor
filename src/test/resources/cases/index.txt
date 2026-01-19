@@ -14,3 +14,4 @@ check-external
 check-missing
 check-mixed
 check-with-ignore
+check-astro-mdx-blank-line
