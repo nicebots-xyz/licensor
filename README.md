@@ -2,6 +2,7 @@
 SPDX-License-Identifier: MIT
 Copyright: 2026 NiceBots.xyz
 -->
+
 # Licensor
 
 Licensor adds copyright notices to files, including formats that need bespoke placement rules.
@@ -64,8 +65,8 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, and `
 
 ## Exit codes
 
-- `0`: Success (check passes; add updated at least one file).
-- `1`: Failure (missing/external licenses in check, no files updated in add, or no inputs matched).
+- `0`: Success (check passes; add did nothing).
+- `1`: Failure (missing licenses in check, files updated in add, or no inputs matched).
 
 ## Inspiration
 

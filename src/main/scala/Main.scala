@@ -234,7 +234,7 @@ object AddCommand extends Command[CommonOptions]:
     }
 
     logger.info(s"Skipped: $skipped")
-    if added == 0 then sys.exit(1)
+    if added == 0 then sys.exit(0)
   }
 
 /** Add command entry point.
