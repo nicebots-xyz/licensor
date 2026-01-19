@@ -1,0 +1,10 @@
+name: add-basic
+command: add
+args:
+  - "source/*.py"
+ignore:
+  - "**/skip.py"
+expectExit: 0
+expectedOutput:
+  - "Added: source/one.py"
+  - "Skipped: 0"

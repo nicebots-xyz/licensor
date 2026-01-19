@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: MIT
+# Copyright: 2026 NiceBots.xyz
+name: Release
+on:
+  push:
+    tags: [ "v*.*.*" ]
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yaml
+    permissions:
+      contents: read
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: quality
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Build fat jar
+        run: sbt clean assembly
+
+      - name: Prepare release bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME}"
+
+          rm -rf dist
+          mkdir -p dist
+
+          # Jar
+          cp target/scala-*/licensor-assembly-*.jar dist/licensor.jar
+
+          # Launchers
+          cp packaging/licensor dist/licensor
+          chmod +x dist/licensor
+
+          cp packaging/licensor.cmd dist/licensor.cmd
+
+          # Archives
+          tar -C dist -czf "licensor-${version}-linux-x86_64.tar.gz" licensor licensor.jar
+          tar -C dist -czf "licensor-${version}-macos-universal.tar.gz" licensor licensor.jar
+          (cd dist && zip -q "../licensor-${version}-windows-x86_64.zip" licensor.cmd licensor.jar)
+
+          # Checksums
+          sha256sum \
+            "licensor-${version}-linux-x86_64.tar.gz" \
+            "licensor-${version}-macos-universal.tar.gz" \
+            "licensor-${version}-windows-x86_64.zip" \
+            > SHA256SUMS.txt
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            **Windows**
+            1. Download `licensor-${{ github.ref_name }}-windows-x86_64.zip`
+            2. Extract somewhere like `C:\Tools\licensor\`
+            3. Add that folder to `PATH`
+            4. Run: `licensor` (or `licensor.cmd`)
+
+            **macOS**
+            1. Download `licensor-${{ github.ref_name }}-macos-universal.tar.gz`
+            2. Extract: `tar -xzf licensor-${{ github.ref_name }}-macos-universal.tar.gz`
+            3. Move `licensor` + `licensor.jar` somewhere in `PATH` (e.g. `~/.local/bin`)
+            4. Run: `licensor --help`
+
+            **Linux**
+            1. Download `licensor-${{ github.ref_name }}-linux-x86_64.tar.gz`
+            2. Extract: `tar -xzf licensor-${{ github.ref_name }}-linux-x86_64.tar.gz`
+            3. Move `licensor` + `licensor.jar` somewhere in `PATH` (e.g. `~/.local/bin`)
+            4. Run: `licensor --help`
+
+            Integrity: download `SHA256SUMS.txt` and verify with `sha256sum -c SHA256SUMS.txt`.
+            ---
+          files: |
+            licensor-${{ github.ref_name }}-linux-x86_64.tar.gz
+            licensor-${{ github.ref_name }}-macos-universal.tar.gz
+            licensor-${{ github.ref_name }}-windows-x86_64.zip
+            SHA256SUMS.txt

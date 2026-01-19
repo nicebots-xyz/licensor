@@ -1,0 +1,9 @@
+name: check-basic
+command: check
+args:
+  - "source/*.py"
+ignore: []
+expectExit: 0
+expectedOutput:
+  - "Present: source/ok.py"
+  - "Skipped: 0"

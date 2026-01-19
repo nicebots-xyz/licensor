@@ -1,0 +1,9 @@
+name: check-external
+command: check
+args:
+  - "source/*.py"
+ignore: [ ]
+expectExit: 0
+expectedOutput:
+  - "External: source/external.py"
+  - "Skipped: 0"

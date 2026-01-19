@@ -1,0 +1,11 @@
+name: check-with-ignore
+command: check
+args:
+  - "source/**/*.py"
+ignore:
+  - "source/vendor/**"
+  - "**/skip.py"
+expectExit: 1
+expectedOutput:
+  - "Present: source/app/main.py"
+  - "Missing: source/app/missing.py"

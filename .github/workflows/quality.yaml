@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+# Copyright: 2026 NiceBots.xyz
+name: Quality Checks
+on:
+  workflow_call:
+
+jobs:
+  checks:
+    name: "Scalafmt + Scalafix"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Scalafmt Check
+        run: sbt scalafmtCheckAll
+
+      - name: Scalafix Check
+        run: sbt "scalafixAll --check"
+
+  test:
+    name: "Tests (${{ matrix.os }})"
+    needs: checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: sbt
+
+      - uses: sbt/setup-sbt@v1
+
+      - name: Test
+        run: sbt test

@@ -1,0 +1,10 @@
+name: add-unchanged
+command: add
+args:
+  - "source"
+ignore: []
+expectExit: 1
+expectedOutput:
+  - "Unchanged: source/already.py"
+  - "Unchanged: source/correct.py"
+  - "Skipped: 0"

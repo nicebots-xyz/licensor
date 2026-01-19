@@ -1,0 +1,16 @@
+add-all-handlers
+add-all-rights-reserved
+add-basic
+add-complex
+add-directory-arg
+add-ignore-bare
+add-multiple-ignores
+add-nested
+add-range
+add-unchanged
+check-all-present
+check-basic
+check-external
+check-missing
+check-mixed
+check-with-ignore

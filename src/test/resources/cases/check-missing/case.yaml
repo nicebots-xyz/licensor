@@ -1,0 +1,9 @@
+name: check-missing
+command: check
+args:
+  - "source/*.py"
+ignore: []
+expectExit: 1
+expectedOutput:
+  - "Missing: source/missing.py"
+  - "Skipped: 0"

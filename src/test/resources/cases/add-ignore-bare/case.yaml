@@ -1,0 +1,11 @@
+name: add-ignore-bare
+command: add
+args:
+  - "source/**/*.py"
+ignore:
+  - "source/skip.py"
+expectExit: 0
+expectedOutput:
+  - "Added: source/src/skip.py"
+  - "Added: source/src/main.py"
+  - "Skipped: 0"

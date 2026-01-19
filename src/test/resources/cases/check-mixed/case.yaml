@@ -1,0 +1,10 @@
+name: check-mixed
+command: check
+args:
+  - "source"
+ignore: []
+expectExit: 1
+expectedOutput:
+  - "Present: source/correct.py"
+  - "External: source/external.py"
+  - "Missing: source/missing.py"

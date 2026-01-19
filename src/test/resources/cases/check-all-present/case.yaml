@@ -1,0 +1,10 @@
+name: check-all-present
+command: check
+args:
+  - "source"
+ignore: []
+expectExit: 0
+expectedOutput:
+  - "Present: source/file1.py"
+  - "Present: source/file2.py"
+  - "Skipped: 0"

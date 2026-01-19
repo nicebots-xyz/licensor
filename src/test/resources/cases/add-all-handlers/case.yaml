@@ -1,0 +1,15 @@
+name: add-all-handlers
+command: add
+args:
+  - "source/*"
+ignore: [ ]
+expectExit: 0
+expectedOutput:
+  - "Added: source/one.py"
+  - "Added: source/one.scala"
+  - "Added: source/one.css"
+  - "Added: source/one.html"
+  - "Added: source/one.astro"
+  - "Added: source/one.mdx"
+  - "Added: source/one.cmd"
+  - "Skipped: 0"
