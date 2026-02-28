@@ -7,6 +7,10 @@ inputs:
   version:
     description: Licensor version to install (e.g. "v1.2.3").
     required: true
+  repository:
+    description: GitHub repository to download releases from (owner/repo).
+    required: false
+    default: nicebots-xyz/licensor
 
 runs:
   using: composite
@@ -31,7 +35,7 @@ runs:
           *) echo "Unsupported OS: ${{ runner.os }}" >&2; exit 1 ;;
         esac
 
-        BASE_URL="https://github.com/${{ github.action_repository }}/releases/download/${VERSION}"
+        BASE_URL="https://github.com/${{ inputs.repository }}/releases/download/${VERSION}"
 
         curl -fsSL "${BASE_URL}/${ASSET}"       -o "${ASSET}"
         curl -fsSL "${BASE_URL}/SHA256SUMS.txt" -o SHA256SUMS.txt
