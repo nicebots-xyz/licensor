@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+# Copyright: 2026 NiceBots.xyz
+name: Setup Licensor
+description: Download licensor and Temurin 21, add both to PATH.
+
+inputs:
+  version:
+    description: Licensor version to install (e.g. "v1.2.3").
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Java (Temurin 21)
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "21"
+
+    - name: Download and install licensor
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+
+        case "${{ runner.os }}" in
+          Linux)   ASSET="licensor-${VERSION}-linux-x86_64.tar.gz" ;;
+          macOS)   ASSET="licensor-${VERSION}-macos-universal.tar.gz" ;;
+          Windows) ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
+          *) echo "Unsupported OS: ${{ runner.os }}" >&2; exit 1 ;;
+        esac
+
+        BASE_URL="https://github.com/${{ github.repository }}/releases/download/${VERSION}"
+
+        curl -fsSL "${BASE_URL}/${ASSET}"       -o "${ASSET}"
+        curl -fsSL "${BASE_URL}/SHA256SUMS.txt" -o SHA256SUMS.txt
+
+        grep "${ASSET}" SHA256SUMS.txt | sha256sum -c -
+
+        INSTALL_DIR="${HOME}/.licensor"
+        mkdir -p "${INSTALL_DIR}"
+
+        case "${{ runner.os }}" in
+          Linux|macOS)
+            tar -xzf "${ASSET}" -C "${INSTALL_DIR}"
+            ;;
+          Windows)
+            unzip -q "${ASSET}" -d "${INSTALL_DIR}"
+            ;;
+        esac
+
+        echo "${INSTALL_DIR}" >> "${GITHUB_PATH}"
