@@ -31,7 +31,7 @@ runs:
           *) echo "Unsupported OS: ${{ runner.os }}" >&2; exit 1 ;;
         esac
 
-        BASE_URL="https://github.com/${{ github.repository }}/releases/download/${VERSION}"
+        BASE_URL="https://github.com/${{ github.action_repository }}/releases/download/${VERSION}"
 
         curl -fsSL "${BASE_URL}/${ASSET}"       -o "${ASSET}"
         curl -fsSL "${BASE_URL}/SHA256SUMS.txt" -o SHA256SUMS.txt
