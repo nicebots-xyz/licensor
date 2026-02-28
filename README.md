@@ -75,7 +75,7 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, and `
 Downloads a licensor release and Temurin 21, then adds both to `PATH`.
 
 ```yaml
-- uses: nicebots/licensor/.github/actions/setup-licensor@<commit-hash>
+- uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash>
   with:
     version: v1.2.3
 ```
