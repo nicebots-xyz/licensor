@@ -68,6 +68,24 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, and `
 - `0`: Success (check passes; add did nothing).
 - `1`: Failure (missing licenses in check, files updated in add, or no inputs matched).
 
+## GitHub Actions
+
+### `setup-licensor`
+
+Downloads a licensor release and Temurin 21, then adds both to `PATH`.
+
+```yaml
+- uses: nicebots/licensor/.github/actions/setup-licensor@<commit-hash>
+  with:
+    version: v1.2.3
+```
+
+| Input     | Required | Description                              |
+|-----------|----------|------------------------------------------|
+| `version` | yes      | Licensor version to install (e.g. `v1.2.3`). |
+
+The action pin (`@<commit-hash>`) and the `version` input are intentionally separate so you can security-pin the action to a specific commit while still choosing which licensor release to download.
+
 ## Inspiration
 
 - HashiCorp copywrite: https://github.com/hashicorp/copywrite
