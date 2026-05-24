@@ -19,7 +19,7 @@ lazy val root = (project in file(".")).enablePlugins(BuildInfoPlugin)
     libraryDependencies += "ch.qos.logback"              % "logback-classic" % "1.5.32",
     libraryDependencies += "com.lihaoyi"                %% "os-lib"          % "0.11.6",
     libraryDependencies += "org.yaml"                    % "snakeyaml"       % "2.6",
-    libraryDependencies += "org.scalatest"              %% "scalatest"       % "3.2.19" % Test,
+    libraryDependencies += "org.scalatest"              %% "scalatest"       % "3.2.20" % Test,
     Compile / mainClass                                 := Some("xyz.nicebots.Main"),
     Compile / packageBin / packageOptions +=
       Package.ManifestAttributes("Implementation-Version" -> version.value),
