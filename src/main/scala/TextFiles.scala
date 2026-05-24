@@ -2,7 +2,9 @@
 // Copyright: 2026 NiceBots.xyz
 package xyz.nicebots
 
-import java.nio.charset.{CharsetDecoder, CodingErrorAction, StandardCharsets}
+import java.nio.charset.CharsetDecoder
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 /** Safe UTF-8 text file reads for license processing. */

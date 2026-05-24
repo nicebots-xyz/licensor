@@ -3,7 +3,7 @@
 package xyz.nicebots
 
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 
 /** Safe directory traversal for CLI file collection. */

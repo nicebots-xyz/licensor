@@ -3,7 +3,9 @@
 package xyz.nicebots
 package handlers
 
-import xyz.nicebots.{FileHandler, LicenseState, LineParsing}
+import xyz.nicebots.FileHandler
+import xyz.nicebots.LicenseState
+import xyz.nicebots.LineParsing
 
 /** Base handler for formats that place license headers after optional YAML frontmatter. */
 abstract class FrontmatterHandler extends FileHandler:
