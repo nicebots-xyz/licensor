@@ -16,7 +16,7 @@ lazy val root = (project in file(".")).enablePlugins(BuildInfoPlugin)
 
     libraryDependencies += "com.github.alexarchambault" %% "case-app"        % "2.1.0",
     libraryDependencies += "org.slf4j"                   % "slf4j-api"       % "2.0.18",
-    libraryDependencies += "ch.qos.logback"              % "logback-classic" % "1.5.25",
+    libraryDependencies += "ch.qos.logback"              % "logback-classic" % "1.5.32",
     libraryDependencies += "com.lihaoyi"                %% "os-lib"          % "0.11.6",
     libraryDependencies += "org.yaml"                    % "snakeyaml"       % "2.6",
     libraryDependencies += "org.scalatest"              %% "scalatest"       % "3.2.19" % Test,
