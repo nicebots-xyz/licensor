@@ -172,15 +172,19 @@ object CheckCommand extends Command[CommonOptions]:
           skipped += 1
           logger.warn(s"Skipping unsupported file type: ${formatPath(ctx.baseDir, path)}")
         case Some(handler) =>
-          val fileDump = Files.readString(path.toNIO, StandardCharsets.UTF_8)
-          handler.checkLicense(fileDump, ctx.licenseText) match
-            case LicenseState.Present =>
-              logger.info(s"Present: ${formatPath(ctx.baseDir, path)}")
-            case LicenseState.External =>
-              logger.info(s"External: ${formatPath(ctx.baseDir, path)}")
-            case LicenseState.Missing =>
-              missing += 1
-              logger.warn(s"Missing: ${formatPath(ctx.baseDir, path)}")
+          TextFiles.readUtf8(path) match
+            case None =>
+              skipped += 1
+              logger.warn(s"Skipping non-text file: ${formatPath(ctx.baseDir, path)}")
+            case Some(fileDump) =>
+              handler.checkLicense(fileDump, ctx.licenseText) match
+                case LicenseState.Present =>
+                  logger.info(s"Present: ${formatPath(ctx.baseDir, path)}")
+                case LicenseState.External =>
+                  logger.info(s"External: ${formatPath(ctx.baseDir, path)}")
+                case LicenseState.Missing =>
+                  missing += 1
+                  logger.warn(s"Missing: ${formatPath(ctx.baseDir, path)}")
     }
 
     logger.info(s"Skipped: $skipped")

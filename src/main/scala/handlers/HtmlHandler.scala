@@ -20,6 +20,7 @@ class HtmlHandler extends FileHandler:
       "xml",
       "svg",
       "svelte",
+      "svx",
       "md",
       "vue",
       "hbs",

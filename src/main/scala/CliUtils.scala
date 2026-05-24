@@ -13,7 +13,8 @@ import config.LicensingConfig
 /** Utility helpers for CLI file handling and config loading.
   *
   * Provides cross-platform file collection using glob patterns and configuration loading with error
-  * handling. Uses `os-lib` for path normalization and Java NIO's PathMatcher for glob matching.
+  * handling. Uses [[FileWalker]] for safe directory traversal and Java NIO's PathMatcher for glob
+  * matching.
   *
   * ==Supported Glob Patterns==
   * Patterns use Java NIO glob syntax:
@@ -25,7 +26,7 @@ import config.LicensingConfig
   *
   * All patterns are matched against paths normalized with forward slashes.
   */
-object CliUtils {
+object CliUtils:
 
   /** Collect input files based on glob patterns and ignore globs.
     *
@@ -77,20 +78,17 @@ object CliUtils {
 
     val directMatches = directPaths.flatMap { p =>
       val resolved = resolvePath(p, baseDir)
-      if os.isFile(resolved) then Vector(resolved)
-      else if os.isDir(resolved) then os.walk(resolved).filter(os.isFile).toVector
-      else Vector.empty
+      FileWalker.listFiles(resolved)
     }
 
     val globMatchers = globPatterns.map(createPathMatcher)
     val globMatches  =
       if globMatchers.isEmpty then Vector.empty
       else
-        os.walk(baseDir)
-          .filter { path =>
-            os.isFile(path) && matchesAny(baseDir, path, globMatchers)
-          }
-          .toVector
+        val extensionHints = FileWalker.extensionHintsFromGlobs(globPatterns)
+        FileWalker
+          .listFiles(baseDir, extensionHints)
+          .filter(path => matchesAny(baseDir, path, globMatchers))
 
     (directMatches ++ globMatches).distinct
 
@@ -174,4 +172,3 @@ object CliUtils {
 
   private def isGlobPattern(s: String): Boolean =
     s.exists(c => c == '*' || c == '?' || c == '[' || c == '{')
-}

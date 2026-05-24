@@ -11,5 +11,6 @@ expectedOutput:
   - "Added: source/one.html"
   - "Added: source/one.astro"
   - "Added: source/one.mdx"
+  - "Added: source/one.svx"
   - "Added: source/one.cmd"
   - "Skipped: 0"
