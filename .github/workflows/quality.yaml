@@ -18,7 +18,7 @@ jobs:
           java-version: "21"
           cache: sbt
 
-      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1
+      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
 
       - name: Scalafmt Check
         run: sbt scalafmtCheckAll
@@ -45,7 +45,7 @@ jobs:
           java-version: "21"
           cache: sbt
 
-      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1
+      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
 
       - name: Test
         run: sbt test
