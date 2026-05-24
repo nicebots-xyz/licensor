@@ -6,14 +6,9 @@ import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 
-/** Safe, performance-oriented directory traversal for CLI file collection.
-  *
-  * Skips common VCS and dependency cache directories, does not follow symbolic links, and
-  * optionally filters by file extension before glob matching.
-  */
+/** Safe directory traversal for CLI file collection. */
 object FileWalker:
 
-  /** Directory names skipped during traversal (exact match on the final path segment). */
   val DefaultSkipDirNames: Set[String] = Set(
     ".git",
     ".svn",
@@ -42,17 +37,6 @@ object FileWalker:
     "coverage"
   )
 
-  /** Collect all regular files under `root`, applying optional extension prefiltering.
-    *
-    * @param root
-    *   directory to walk
-    * @param extensionHints
-    *   when non-empty, only files whose extension (lowercase, no dot) is in this set are returned
-    * @param skipDirNames
-    *   directory names to prune from the walk
-    * @return
-    *   files discovered under `root` (not including `root` itself)
-    */
   def listFiles(
       root: os.Path,
       extensionHints: Set[String] = Set.empty,
@@ -84,17 +68,27 @@ object FileWalker:
 
       try Files.walkFileTree(root.toNIO, visitor)
       catch case _: IOException => ()
-      result.result()
+      result
+        .result()
+        .filterNot(path => hasSkippedSegment(root, path, skipDirNames))
 
-  /** Infer lowercase extensions from recursive glob patterns ending in a dotted extension. */
   def extensionHintsFromGlobs(globs: Vector[String]): Set[String] =
     globs.flatMap(extensionFromGlob).map(_.toLowerCase).toSet
+
+  private def hasSkippedSegment(
+      root: os.Path,
+      path: os.Path,
+      skipDirNames: Set[String]
+  ): Boolean =
+    val segments =
+      try path.relativeTo(root).segments
+      catch case _: Throwable => Vector.empty[String]
+    segments.exists(skipDirNames.contains)
 
   private val globExtensionPattern = ".*\\*\\.([A-Za-z0-9]+)".r
 
   private def extensionFromGlob(glob: String): Option[String] =
-    val normalized = glob.replace('\\', '/')
-    globExtensionPattern.findFirstMatchIn(normalized).map(_.group(1))
+    globExtensionPattern.findFirstMatchIn(glob.replace('\\', '/')).map(_.group(1))
 
   private def matchesExtensionHint(path: os.Path, hints: Set[String]): Boolean =
     extensionOf(path) match
