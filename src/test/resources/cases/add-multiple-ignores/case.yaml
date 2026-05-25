@@ -8,5 +8,6 @@ ignore:
   - "**/test_*.py"
 expectExit: 1
 expectedOutput:
-  - "Added: source/app/main.py"
-  - "Skipped: 0"
+  - "add - 1 file"
+  - "+ added  source/app/main.py"
+  - "1 file updated - 1 scanned"

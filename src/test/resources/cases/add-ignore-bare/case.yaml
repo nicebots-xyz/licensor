@@ -6,6 +6,7 @@ ignore:
   - "source/skip.py"
 expectExit: 1
 expectedOutput:
-  - "Added: source/src/skip.py"
-  - "Added: source/src/main.py"
-  - "Skipped: 0"
+  - "add - 2 files"
+  - "+ added  source/src/skip.py"
+  - "+ added  source/src/main.py"
+  - "2 files updated - 2 scanned"

@@ -5,5 +5,7 @@ args:
 ignore: [ ]
 expectExit: 0
 expectedOutput:
-  - "External: source/external.py"
-  - "Skipped: 0"
+  - "check - 1 file"
+  - "External"
+  - "  source/external.py"
+  - "1 checked - 1 external"

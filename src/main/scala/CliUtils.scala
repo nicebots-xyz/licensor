@@ -17,15 +17,6 @@ object CliUtils:
     *
     * Ignore rules are merged from the config file, CLI flags, and (by default) `.gitignore` files
     * encountered while walking.
-    *
-    * @param globs
-    *   input glob patterns or direct file/directory paths
-    * @param ignoreGlobs
-    *   glob patterns to exclude (config + CLI, merged by caller)
-    * @param baseDir
-    *   base directory for resolving relative paths
-    * @param respectGitignore
-    *   when true, apply `.gitignore` rules during directory walks
     */
   def collectFiles(
       globs: Vector[String],
@@ -53,8 +44,7 @@ object CliUtils:
       baseDir: os.Path,
       respectGitignore: Boolean
   ): Vector[os.Path] =
-    val normalized = patterns.map(normalizePattern)
-
+    val normalized                  = patterns.map(normalizePattern)
     val (globPatterns, directPaths) = normalized.partition(isGlobPattern)
 
     val directMatches = directPaths.flatMap { p =>
@@ -83,13 +73,10 @@ object CliUtils:
 
   def loadConfigOrExit(path: String, baseDir: os.Path, logger: Logger): LicensingConfig =
     val configPath = resolvePath(path, baseDir)
-    if !os.isFile(configPath) then
-      logger.error(s"Config file not found: $path")
-      sys.exit(1)
+    if !os.isFile(configPath) then CliUx.fatal(s"Config file not found: $path")
     LicensingConfig.load(configPath.toNIO) match
       case Left(error) =>
-        logger.error(s"Config error: $error")
-        sys.exit(1)
+        CliUx.fatal(s"Config error: $error")
       case Right(cfg) => cfg
 
   private def resolvePath(path: String, baseDir: os.Path): os.Path =
