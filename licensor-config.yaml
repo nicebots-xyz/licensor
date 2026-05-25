@@ -3,3 +3,5 @@
 holder: NiceBots.xyz
 spdx: MIT
 year: 2026
+ignores:
+  - "src/test/resources/**/*"
