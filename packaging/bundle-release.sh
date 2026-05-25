@@ -25,6 +25,14 @@ if [[ -z "$JAR" || ! -f "$JAR" ]]; then
   exit 1
 fi
 
+require_native() {
+  local src="$1"
+  if [[ ! -f "$src" ]]; then
+    echo "Missing required native binary: $src" >&2
+    exit 1
+  fi
+}
+
 fetch_jre() {
   local platform="$1"
   local dest="$2"
@@ -40,13 +48,23 @@ fetch_jre() {
   esac
 
   local api="https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=${arch}&image_type=jre&os=${os}"
-  local url
-  url="$(curl -fsSL "$api" | python3 -c "import json,sys; print(json.load(sys.stdin)[0]['binary']['package']['link'])")"
+  local meta
+  meta="$(curl -fsSL "$api" | python3 -c "import json,sys; pkg=json.load(sys.stdin)[0]['binary']['package']; print(pkg['link']); print(pkg['checksum']); print(pkg['checksum_type'])")"
+  local url checksum checksum_type
+  url="$(sed -n '1p' <<<"$meta")"
+  checksum="$(sed -n '2p' <<<"$meta")"
+  checksum_type="$(sed -n '3p' <<<"$meta")"
+  if [[ "$checksum_type" != "sha256" ]]; then
+    echo "Unsupported Adoptium checksum type: $checksum_type" >&2
+    exit 1
+  fi
 
   mkdir -p "$dest"
   local archive
   archive="$(mktemp)"
   curl -fsSL "$url" -o "$archive"
+  echo "${checksum}  ${archive}" | sha256sum -c -
+
   if [[ "$url" == *.zip ]]; then
     mkdir -p "$dest/jre"
     unzip -q "$archive" -d "$dest"
@@ -62,17 +80,18 @@ fetch_jre() {
 bundle_unix() {
   local name="$1"
   local jre_platform="$2"
-  local native_src="$STAGING/$3"
+  local native_asset="$3"
+  local native_src="$STAGING/$native_asset"
+  require_native "$native_src"
+
   local work="$DIST/_work-$name"
   rm -rf "$work"
   mkdir -p "$work"
   cp "$JAR" "$work/licensor.jar"
   cp "$ROOT/packaging/licensor" "$work/licensor"
   chmod +x "$work/licensor"
-  if [[ -f "$native_src" ]]; then
-    cp "$native_src" "$work/licensor-native"
-    chmod +x "$work/licensor-native"
-  fi
+  cp "$native_src" "$work/licensor-native"
+  chmod +x "$work/licensor-native"
   fetch_jre "$jre_platform" "$work"
   tar -C "$work" -czf "$DIST/licensor-${VERSION}-${name}.tar.gz" .
   rm -rf "$work"
@@ -81,15 +100,16 @@ bundle_unix() {
 bundle_windows() {
   local name="$1"
   local jre_platform="$2"
-  local native_src="$STAGING/$3"
+  local native_asset="$3"
+  local native_src="$STAGING/$native_asset"
+  require_native "$native_src"
+
   local work="$DIST/_work-$name"
   rm -rf "$work"
   mkdir -p "$work"
   cp "$JAR" "$work/licensor.jar"
   cp "$ROOT/packaging/licensor.cmd" "$work/licensor.cmd"
-  if [[ -f "$native_src" ]]; then
-    cp "$native_src" "$work/licensor.exe"
-  fi
+  cp "$native_src" "$work/licensor.exe"
   fetch_jre "$jre_platform" "$work"
   (cd "$work" && zip -qr "$DIST/licensor-${VERSION}-${name}.zip" .)
   rm -rf "$work"

@@ -38,7 +38,7 @@ jobs:
           - os: windows-11-arm
             asset_name: licensor-aarch64-pc-windows.exe
             native_path: target/native-image/licensor.exe
-            msvc_arch: x86_arm64
+            msvc_arch: arm64
 
     env:
       JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8

@@ -29,9 +29,24 @@ runs:
         set -euo pipefail
 
         case "${{ runner.os }}" in
-          Linux)   ASSET="licensor-${VERSION}-linux-x86_64.tar.gz" ;;
-          macOS)   ASSET="licensor-${VERSION}-macos-universal.tar.gz" ;;
-          Windows) ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
+          Linux)
+            case "${{ runner.arch }}" in
+              ARM64) ASSET="licensor-${VERSION}-linux-aarch64.tar.gz" ;;
+              *)     ASSET="licensor-${VERSION}-linux-x86_64.tar.gz" ;;
+            esac
+            ;;
+          macOS)
+            case "${{ runner.arch }}" in
+              ARM64) ASSET="licensor-${VERSION}-macos-aarch64.tar.gz" ;;
+              *)     ASSET="licensor-${VERSION}-macos-x86_64.tar.gz" ;;
+            esac
+            ;;
+          Windows)
+            case "${{ runner.arch }}" in
+              ARM64) ASSET="licensor-${VERSION}-windows-aarch64.zip" ;;
+              *)     ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
+            esac
+            ;;
           *) echo "Unsupported OS: ${{ runner.os }}" >&2; exit 1 ;;
         esac
 
