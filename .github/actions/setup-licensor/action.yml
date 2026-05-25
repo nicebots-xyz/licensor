@@ -19,7 +19,8 @@ runs:
       uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
       with:
         distribution: temurin
-        java-version: "21"
+        java-version-file: .java-version
+        check-latest: false
 
     - name: Download and install licensor
       shell: bash
@@ -29,24 +30,9 @@ runs:
         set -euo pipefail
 
         case "${{ runner.os }}" in
-          Linux)
-            case "${{ runner.arch }}" in
-              ARM64) ASSET="licensor-${VERSION}-linux-aarch64.tar.gz" ;;
-              *)     ASSET="licensor-${VERSION}-linux-x86_64.tar.gz" ;;
-            esac
-            ;;
-          macOS)
-            case "${{ runner.arch }}" in
-              ARM64) ASSET="licensor-${VERSION}-macos-aarch64.tar.gz" ;;
-              *)     ASSET="licensor-${VERSION}-macos-x86_64.tar.gz" ;;
-            esac
-            ;;
-          Windows)
-            case "${{ runner.arch }}" in
-              ARM64) ASSET="licensor-${VERSION}-windows-aarch64.zip" ;;
-              *)     ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
-            esac
-            ;;
+          Linux)   ASSET="licensor-${VERSION}-linux-x86_64.tar.gz" ;;
+          macOS)   ASSET="licensor-${VERSION}-macos-universal.tar.gz" ;;
+          Windows) ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
           *) echo "Unsupported OS: ${{ runner.os }}" >&2; exit 1 ;;
         esac
 

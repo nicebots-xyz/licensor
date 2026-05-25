@@ -3,6 +3,7 @@ val scala3Version = "3.8.3"
 lazy val root = (project in file("."))
   .enablePlugins(BuildInfoPlugin, NativeImagePlugin)
   .settings(
+    nativeImageVersion := "21.0.2",
     nativeImageJvm := "graalvm-java21",
     nativeImageOptions ++= List(
       "--no-fallback",
