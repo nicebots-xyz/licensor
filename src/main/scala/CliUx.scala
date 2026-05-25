@@ -70,7 +70,11 @@ object CliUx:
 
   def blank(): Unit = println()
 
-  def rule(width: Int = 32): Unit = line(dim(Symbols.rule * width))
+  def rule(width: Int): Unit = line(dim(Symbols.rule * width))
+
+  /** Visible character length after stripping ANSI escape sequences. */
+  def visibleLength(text: String): Int =
+    text.replaceAll("\u001b\\[[0-9;]*[A-Za-z]", "").length
 
   def commandHeader(command: String, fileCount: Int): Unit =
     val noun = if fileCount == 1 then "file" else "files"
@@ -79,15 +83,20 @@ object CliUx:
   final class Progress(total: Int, label: String = "Scanning"):
     private var lastLen = 0
 
-    def update(current: Int, detail: String): Unit =
+    def update(current: Int): Unit =
       if !shouldShow then return
-      val text = dim(s"  $label ($current/$total) $detail")
+      val text = dim(s"  $label ($current/$total)")
       val pad  = " " * math.max(0, lastLen - text.length)
       print(s"\r$text$pad")
       lastLen = text.length
 
-    def finish(): Unit =
-      if shouldShow && lastLen > 0 then print(s"\r${" " * lastLen}\r")
+    /** Clear the transient progress line before printing a permanent result line. */
+    def clearForOutput(): Unit =
+      if shouldShow && lastLen > 0 then
+        print(s"\r${" " * lastLen}\r")
+        lastLen = 0
+
+    def finish(): Unit = clearForOutput()
 
     private def shouldShow: Boolean =
       colorEnabled && System.console() != null && total > 1
@@ -112,23 +121,24 @@ object CliUx:
 
   def summaryCheck(checked: Int, missing: Int, external: Int): Unit =
     blank()
-    rule()
     val parts = Vector.newBuilder[String]
     parts += dim(s"$checked checked")
     if missing > 0 then parts += statusWord(StatusKind.Missing, s"$missing missing")
     else if external == 0 then parts += statusWord(StatusKind.Ok, "all clear")
     if external > 0 then parts += statusWord(StatusKind.External, s"$external external")
-    line(parts.result().mkString(s" ${Symbols.sep} "))
+    val summary = parts.result().mkString(s" ${Symbols.sep} ")
+    rule(visibleLength(summary))
+    line(summary)
 
   def summaryAdd(processed: Int, added: Int): Unit =
     blank()
-    rule()
-    if added > 0 then
-      line(
+    val summary =
+      if added > 0 then
         statusWord(StatusKind.Added, s"$added ${plural(added, "file")} updated") +
           dim(s" ${Symbols.sep} $processed scanned")
-      )
-    else line(dim(s"No changes across $processed ${plural(processed, "file")}"))
+      else dim(s"No changes across $processed ${plural(processed, "file")}")
+    rule(visibleLength(summary))
+    line(summary)
 
   private def plural(count: Int, word: String): String =
     if count == 1 then word else s"${word}s"

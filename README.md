@@ -14,7 +14,7 @@ x missing  source/missing.py
 External
   source/external.py
 
---------------------------------
+----------------------------------
 3 checked - 1 missing - 1 external
 
 $ licensor add --ignore '**/skip.py' source/*
@@ -22,7 +22,7 @@ $ licensor add --ignore '**/skip.py' source/*
 add - 1 file
 + added  source/one.py
 
---------------------------------
+----------------------------
 1 file updated - 1 scanned
 ```
 

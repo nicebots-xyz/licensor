@@ -112,10 +112,11 @@ object CheckCommand extends Command[CommonOptions]:
     CliUx.commandHeader("check", targets.length)
 
     targets.zipWithIndex.foreach { case (file, idx) =>
-      progress.update(idx + 1, file.relPath)
+      progress.update(idx + 1)
       file.handler.checkLicense(file.content, ctx.licenseText) match
         case LicenseState.Present =>
           if opts.verbose then
+            progress.clearForOutput()
             logger.debug(s"Present: ${file.relPath}")
             CliUx.presentLine(file.relPath)
         case LicenseState.External =>
@@ -123,6 +124,7 @@ object CheckCommand extends Command[CommonOptions]:
           if opts.verbose then logger.debug(s"External: ${file.relPath}")
         case LicenseState.Missing =>
           missing += 1
+          progress.clearForOutput()
           CliUx.missingLine(file.relPath)
           if opts.verbose then logger.debug(s"Missing: ${file.relPath}")
     }
@@ -148,15 +150,17 @@ object AddCommand extends Command[CommonOptions]:
     CliUx.commandHeader("add", targets.length)
 
     targets.zipWithIndex.foreach { case (file, idx) =>
-      progress.update(idx + 1, file.relPath)
+      progress.update(idx + 1)
       val (updated, didAdd) = file.handler.addLicense(file.content, ctx.licenseText)
       if didAdd then
         Files.writeString(file.path.toNIO, updated, StandardCharsets.UTF_8)
         added += 1
+        progress.clearForOutput()
         CliUx.addedLine(file.relPath)
         if opts.verbose then logger.debug(s"Added: ${file.relPath}")
       else if opts.verbose then
         logger.debug(s"Unchanged: ${file.relPath}")
+        progress.clearForOutput()
         CliUx.unchangedLine(file.relPath)
     }
 
