@@ -44,13 +44,13 @@ jobs:
             asset_name: licensor-x86_64-pc-windows.exe
             native_path: target/native-image/licensor.exe
             jre_arch: x64
-            msvc_arch: x64
+            vcvars_arch: x64
           - os: windows-11-arm
             bundle_id: windows-aarch64
             asset_name: licensor-aarch64-pc-windows.exe
             native_path: target/native-image/licensor.exe
             jre_arch: aarch64
-            msvc_arch: x86_arm64
+            vcvars_arch: arm64
 
     env:
       JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8
@@ -72,9 +72,9 @@ jobs:
 
       - name: Setup Windows C++ toolchain
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@a102174a2b586eec2ea151a69e6fd14404a8ce7c # v1.13.0
+        uses: ./.github/actions/setup-vcvars
         with:
-          arch: ${{ matrix.msvc_arch }}
+          arch: ${{ matrix.vcvars_arch }}
 
       - name: Build native image
         shell: bash
