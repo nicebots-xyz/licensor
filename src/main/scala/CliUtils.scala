@@ -58,7 +58,11 @@ object CliUtils:
     val (globPatterns, directPaths) = normalized.partition(isGlobPattern)
 
     val directMatches = directPaths.flatMap { p =>
-      FileWalker.listFiles(resolvePath(p, baseDir), respectGitignore = respectGitignore)
+      FileWalker.listFiles(
+        resolvePath(p, baseDir),
+        respectGitignore = respectGitignore,
+        gitignoreRoot = Some(baseDir)
+      )
     }
 
     val globMatchers = globPatterns.map(createPathMatcher)
@@ -67,7 +71,12 @@ object CliUtils:
       else
         val extensionHints = FileWalker.extensionHintsFromGlobs(globPatterns)
         FileWalker
-          .listFiles(baseDir, extensionHints, respectGitignore)
+          .listFiles(
+            baseDir,
+            extensionHints,
+            respectGitignore,
+            gitignoreRoot = Some(baseDir)
+          )
           .filter(path => matchesAny(baseDir, path, globMatchers))
 
     (directMatches ++ globMatches).distinct

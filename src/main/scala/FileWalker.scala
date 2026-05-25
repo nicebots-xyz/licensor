@@ -16,12 +16,14 @@ object FileWalker:
   def listFiles(
       root: os.Path,
       extensionHints: Set[String] = Set.empty,
-      respectGitignore: Boolean = true
+      respectGitignore: Boolean = true,
+      gitignoreRoot: Option[os.Path] = None
   ): Vector[os.Path] =
     if !os.exists(root) then Vector.empty
     else if os.isFile(root) then Vector(root)
     else
-      val gitignore = if respectGitignore then Some(GitignoreMatcher(root)) else None
+      val ignoreRoot = gitignoreRoot.getOrElse(root)
+      val gitignore  = if respectGitignore then Some(GitignoreMatcher(ignoreRoot)) else None
       val result    = Vector.newBuilder[os.Path]
       val visitor   = new SimpleFileVisitor[Path]:
         override def preVisitDirectory(

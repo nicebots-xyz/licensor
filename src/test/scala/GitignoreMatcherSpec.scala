@@ -62,3 +62,37 @@ class GitignoreMatcherSpec extends AnyFunSuite:
     assert(paths.contains("vendor/lib.py"))
     assert(!paths.contains("build/out.py"))
   }
+
+  test("direct directory input respects repo-root gitignore") {
+    val tempDir = Files.createTempDirectory("gitignore")
+    Files.writeString(tempDir.resolve(".gitignore"), "src/generated/\n")
+    Files.createDirectories(tempDir.resolve("src/generated"))
+    Files.writeString(tempDir.resolve("src/generated/skip.js"), "js")
+    Files.createDirectories(tempDir.resolve("src/hand"))
+    Files.writeString(tempDir.resolve("src/hand/main.py"), "py")
+
+    val baseDir = os.Path(tempDir)
+    val result  = CliUtils.collectFiles(Vector("src"), Vector.empty, baseDir)
+    val paths   = result.map(_.relativeTo(baseDir).toString)
+
+    assert(paths.contains("src/hand/main.py"))
+    assert(!paths.exists(_.contains("generated")))
+  }
+
+  test("nested gitignore matches patterns relative to its directory") {
+    val tempDir = Files.createTempDirectory("gitignore")
+    Files.createDirectories(tempDir.resolve("src"))
+    Files.writeString(tempDir.resolve("src/.gitignore"), "generated/*.js\n")
+    Files.createDirectories(tempDir.resolve("src/generated"))
+    Files.writeString(tempDir.resolve("src/generated/a.js"), "js")
+    Files.writeString(tempDir.resolve("src/generated/a.py"), "py")
+    Files.writeString(tempDir.resolve("src/main.py"), "py")
+
+    val baseDir = os.Path(tempDir)
+    val result  = CliUtils.collectFiles(Vector("src"), Vector.empty, baseDir)
+    val paths   = result.map(_.relativeTo(baseDir).toString)
+
+    assert(paths.contains("src/main.py"))
+    assert(paths.contains("src/generated/a.py"))
+    assert(!paths.contains("src/generated/a.js"))
+  }

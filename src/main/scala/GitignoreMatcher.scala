@@ -36,8 +36,12 @@ final class GitignoreMatcher private (root: os.Path):
 
     def applyDirRules(dir: os.Path): Unit =
       rulesByDir.get(dir).foreach { rules =>
+        val relativeToDir =
+          try GitignoreMatcher.normalizeRelative(path.relativeTo(dir).toString)
+          catch case _: Throwable => return
         rules.foreach { rule =>
-          if GitignoreMatcher.ruleMatches(rule, relative, isDirectory) then ignored = !rule.negated
+          if GitignoreMatcher.ruleMatches(rule, relativeToDir, isDirectory) then
+            ignored = !rule.negated
         }
       }
 
