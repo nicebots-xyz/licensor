@@ -25,11 +25,14 @@ enum YearRange:
   *   copyright holder
   * @param years
   *   copyright year or year range
+  * @param ignores
+  *   glob patterns excluded when collecting files (merged with CLI `--ignore`)
   */
 case class LicensingConfig(
     spdxId: Option[String],
     holder: String,
-    years: YearRange
+    years: YearRange,
+    ignores: Vector[String] = Vector.empty
 )
 
 object LicensingConfig:

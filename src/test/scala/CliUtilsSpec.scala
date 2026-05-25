@@ -137,16 +137,14 @@ class CliUtilsSpec extends AnyFunSuite:
     assert(!relativePaths.contains("build/output.py"), "Should exclude build/output.py")
   }
 
-  test("walker skips node_modules and .git directories") {
+  test("respect-gitignore skips paths listed in .gitignore") {
     val tempDir = Files.createTempDirectory("test")
     val srcDir  = tempDir.resolve("src")
-    val gitDir  = tempDir.resolve(".git")
     val nodeDir = tempDir.resolve("node_modules/pkg")
 
-    Files.createDirectories(gitDir)
+    Files.writeString(tempDir.resolve(".gitignore"), "node_modules/\n")
     Files.createDirectories(nodeDir)
     Files.createDirectories(srcDir)
-    Files.writeString(gitDir.resolve("config"), "git")
     Files.writeString(nodeDir.resolve("index.js"), "js")
     Files.writeString(srcDir.resolve("main.py"), "content")
 
@@ -155,7 +153,6 @@ class CliUtilsSpec extends AnyFunSuite:
     val relativePaths = result.map(_.relativeTo(baseDir).toString).sorted
 
     assert(relativePaths.contains("src/main.py"))
-    assert(!relativePaths.exists(_.contains(".git")))
     assert(!relativePaths.exists(_.contains("node_modules")))
   }
 

@@ -6,61 +6,42 @@ import java.io.IOException
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 
-/** Safe directory traversal for CLI file collection. */
+/** Directory traversal for CLI file collection.
+  *
+  * By default respects `.gitignore` files discovered while walking. Symbolic links are never
+  * followed.
+  */
 object FileWalker:
-
-  val DefaultSkipDirNames: Set[String] = Set(
-    ".git",
-    ".svn",
-    ".hg",
-    ".bzr",
-    "node_modules",
-    "target",
-    "dist",
-    "build",
-    "out",
-    ".gradle",
-    ".m2",
-    ".ivy2",
-    ".coursier",
-    "__pycache__",
-    ".pytest_cache",
-    ".tox",
-    ".venv",
-    "venv",
-    ".idea",
-    ".cursor",
-    ".next",
-    ".nuxt",
-    ".svelte-kit",
-    ".turbo",
-    "coverage"
-  )
 
   def listFiles(
       root: os.Path,
       extensionHints: Set[String] = Set.empty,
-      skipDirNames: Set[String] = DefaultSkipDirNames
+      respectGitignore: Boolean = true
   ): Vector[os.Path] =
     if !os.exists(root) then Vector.empty
     else if os.isFile(root) then Vector(root)
     else
-      val result  = Vector.newBuilder[os.Path]
-      val visitor = new SimpleFileVisitor[Path]:
+      val gitignore = if respectGitignore then Some(GitignoreMatcher(root)) else None
+      val result    = Vector.newBuilder[os.Path]
+      val visitor   = new SimpleFileVisitor[Path]:
         override def preVisitDirectory(
             dir: Path,
             attrs: BasicFileAttributes
         ): FileVisitResult =
           if attrs.isSymbolicLink then FileVisitResult.SKIP_SUBTREE
-          else if dir == root.toNIO then super.preVisitDirectory(dir, attrs)
-          else if skipDirNames.contains(dir.getFileName.toString) then FileVisitResult.SKIP_SUBTREE
-          else super.preVisitDirectory(dir, attrs)
+          else
+            val path = os.Path(dir)
+            gitignore.foreach(_.enterDirectory(path))
+            if gitignore.exists(_.isIgnored(path, isDirectory = true)) then
+              FileVisitResult.SKIP_SUBTREE
+            else super.preVisitDirectory(dir, attrs)
 
         override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult =
           if attrs.isRegularFile && !attrs.isSymbolicLink then
-            val path = os.Path(file)
-            if extensionHints.isEmpty || matchesExtensionHint(path, extensionHints) then
-              result += path
+            val path    = os.Path(file)
+            val ignored = gitignore.exists(_.isIgnored(path, isDirectory = false))
+            val extOk   = extensionHints.isEmpty || matchesExtensionHint(path, extensionHints)
+            if !ignored && extOk then result += path
           FileVisitResult.CONTINUE
 
         override def visitFileFailed(file: Path, exc: IOException): FileVisitResult =
@@ -68,22 +49,10 @@ object FileWalker:
 
       try Files.walkFileTree(root.toNIO, visitor)
       catch case _: IOException => ()
-      result
-        .result()
-        .filterNot(path => hasSkippedSegment(root, path, skipDirNames))
+      result.result()
 
   def extensionHintsFromGlobs(globs: Vector[String]): Set[String] =
     globs.flatMap(extensionFromGlob).map(_.toLowerCase).toSet
-
-  private def hasSkippedSegment(
-      root: os.Path,
-      path: os.Path,
-      skipDirNames: Set[String]
-  ): Boolean =
-    val segments =
-      try path.relativeTo(root).segments
-      catch case _: Throwable => Vector.empty[String]
-    segments.exists(skipDirNames.contains)
 
   private val globExtensionPattern = ".*\\*\\.([A-Za-z0-9]+)".r
 

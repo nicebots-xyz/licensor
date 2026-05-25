@@ -44,6 +44,9 @@ case class CommonOptions(
     config: String = "licensor-config.yaml",
     @HelpMessage("Glob to ignore (can be specified multiple times)")
     ignore: Vector[String] = Vector.empty,
+    @HelpMessage("Respect .gitignore patterns when collecting files (default: enabled)")
+    @Name("respect-gitignore")
+    respectGitignore: Option[Boolean] = Some(true),
     @HelpMessage("Enable verbose logging")
     verbose: Option[Boolean] = Some(false)
 ) extends BaseOptions
@@ -107,12 +110,16 @@ def setupCommand(
 
   val baseDir    = os.pwd
   val inputGlobs = args.all.toVector
-  val inputFiles = CliUtils.collectFiles(inputGlobs, opts.ignore, baseDir)
+
+  val config           = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
+  val mergedIgnores    = config.ignores ++ opts.ignore
+  val respectGitignore = opts.respectGitignore.getOrElse(true)
+  val inputFiles       =
+    CliUtils.collectFiles(inputGlobs, mergedIgnores, baseDir, respectGitignore)
   if inputFiles.isEmpty then
     logger.error("No input files matched.")
     sys.exit(1)
 
-  val config      = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
   val licenseText = LicensingConfig.toLicenseText(config)
 
   val handlerList = Seq(
@@ -172,19 +179,15 @@ object CheckCommand extends Command[CommonOptions]:
           skipped += 1
           logger.warn(s"Skipping unsupported file type: ${formatPath(ctx.baseDir, path)}")
         case Some(handler) =>
-          TextFiles.readUtf8(path) match
-            case None =>
-              skipped += 1
-              logger.warn(s"Skipping non-text file: ${formatPath(ctx.baseDir, path)}")
-            case Some(fileDump) =>
-              handler.checkLicense(fileDump, ctx.licenseText) match
-                case LicenseState.Present =>
-                  logger.info(s"Present: ${formatPath(ctx.baseDir, path)}")
-                case LicenseState.External =>
-                  logger.info(s"External: ${formatPath(ctx.baseDir, path)}")
-                case LicenseState.Missing =>
-                  missing += 1
-                  logger.warn(s"Missing: ${formatPath(ctx.baseDir, path)}")
+          val fileDump = Files.readString(path.toNIO, StandardCharsets.UTF_8)
+          handler.checkLicense(fileDump, ctx.licenseText) match
+            case LicenseState.Present =>
+              logger.info(s"Present: ${formatPath(ctx.baseDir, path)}")
+            case LicenseState.External =>
+              logger.info(s"External: ${formatPath(ctx.baseDir, path)}")
+            case LicenseState.Missing =>
+              missing += 1
+              logger.warn(s"Missing: ${formatPath(ctx.baseDir, path)}")
     }
 
     logger.info(s"Skipped: $skipped")

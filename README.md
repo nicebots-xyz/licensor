@@ -41,7 +41,7 @@ licensor add "src/**/*.py"
 licensor check "src/**/*.py"
 ```
 
-Use `-c` to point at a different config path, `--ignore` to exclude globs, and `--verbose` for debug logging.
+Use `-c` to point at a different config path, `--ignore` to exclude globs, `--respect-gitignore` / `--no-respect-gitignore` to control `.gitignore` filtering (on by default), and `--verbose` for debug logging.
 
 ## Supported extensions
 
@@ -51,7 +51,7 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, and `
   `h`, `hpp`, `cs`, `swift`, `dart`, `php`
 - Astro (HTML comments after frontmatter): `astro`
 - MDX (JSX comments after frontmatter): `mdx`
-- HTML-like block comments: `html`, `htm`, `xhtml`, `xml`, `svg`, `svelte`, `svx`, `md`, `vue`, `hbs`, `handlebars`, `mustache`
+- HTML-like block comments: `html`, `htm`, `xhtml`, `xml`, `svg`, `svelte`, `md`, `vue`, `hbs`, `handlebars`, `mustache`
 - CSS-like block comments: `css`, `scss`, `sass`, `less`
 - CMD line comments: `cmd`
 
