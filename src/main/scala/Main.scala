@@ -101,8 +101,10 @@ object CheckCommand extends Command[CommonOptions]:
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def run(opts: CommonOptions, args: RemainingArgs): Unit =
-    val ctx           = setupCommand(opts, args, logger)
-    val targets       = loadProcessable(ctx)
+    val ctx     = setupCommand(opts, args, logger)
+    val targets = loadProcessable(ctx)
+    if targets.isEmpty then CliUx.fatal("No processable files matched.")
+
     val externalPaths = Vector.newBuilder[String]
     var missing       = 0
     val progress      = CliUx.Progress(targets.length, "Checking")
@@ -126,8 +128,9 @@ object CheckCommand extends Command[CommonOptions]:
     }
 
     progress.finish()
-    CliUx.externalSection(externalPaths.result())
-    CliUx.summaryCheck(targets.length, missing, externalPaths.result().distinct.size)
+    val externals = externalPaths.result().distinct
+    CliUx.externalSection(externals)
+    CliUx.summaryCheck(targets.length, missing, externals.size)
     if missing > 0 then sys.exit(1)
 
 object AddCommand extends Command[CommonOptions]:
@@ -135,8 +138,10 @@ object AddCommand extends Command[CommonOptions]:
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def run(opts: CommonOptions, args: RemainingArgs): Unit =
-    val ctx      = setupCommand(opts, args, logger)
-    val targets  = loadProcessable(ctx)
+    val ctx     = setupCommand(opts, args, logger)
+    val targets = loadProcessable(ctx)
+    if targets.isEmpty then CliUx.fatal("No processable files matched.")
+
     var added    = 0
     val progress = CliUx.Progress(targets.length, "Updating")
 
