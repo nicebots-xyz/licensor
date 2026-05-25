@@ -32,7 +32,12 @@ class GitignoreMatcherSpec extends AnyFunSuite:
 
     val baseDir = os.Path(tempDir)
     val result  =
-      CliUtils.collectFiles(Vector("*.py", "**/*.py"), Vector.empty, baseDir, respectGitignore = false)
+      CliUtils.collectFiles(
+        Vector("*.py", "**/*.py"),
+        Vector.empty,
+        baseDir,
+        respectGitignore = false
+      )
     val paths = result.map(_.relativeTo(baseDir).toString).sorted
 
     assert(paths.contains("skipped/hidden.py"))
