@@ -5,6 +5,5 @@ args:
 ignore: []
 expectExit: 0
 expectedOutput:
-  - "Present: source/file1.py"
-  - "Present: source/file2.py"
-  - "Skipped: 0"
+  - "check - 2 files"
+  - "2 checked - all clear"

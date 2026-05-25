@@ -5,6 +5,5 @@ args:
 ignore: [ ]
 expectExit: 0
 expectedOutput:
-  - "Unchanged: source/already.py"
-  - "Unchanged: source/correct.py"
-  - "Skipped: 0"
+  - "add - 2 files"
+  - "No changes across 2 files"

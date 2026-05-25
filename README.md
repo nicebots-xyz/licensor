@@ -5,6 +5,27 @@ Copyright: 2026 NiceBots.xyz
 
 # Licensor
 
+```console
+$ licensor check source/*
+
+check - 3 files
+x missing  source/missing.py
+
+External
+  source/external.py
+
+--------------------------------
+3 checked - 1 missing - 1 external
+
+$ licensor add --ignore '**/skip.py' source/*
+
+add - 1 file
++ added  source/one.py
+
+--------------------------------
+1 file updated - 1 scanned
+```
+
 Licensor adds copyright notices to files, including formats that need bespoke placement rules.
 
 ## Why this exists
@@ -41,7 +62,8 @@ licensor add "src/**/*.py"
 licensor check "src/**/*.py"
 ```
 
-Use `-c` to point at a different config path, `--ignore` to exclude globs, `--respect-gitignore` / `--no-respect-gitignore` to control `.gitignore` filtering (on by default), and `--verbose` for debug logging.
+Use `-c` to point at a different config path, `--ignore` to exclude globs, `--respect-gitignore` / `--no-respect-gitignore` to control `.gitignore` filtering (on by default), `--no-color` to disable styling, and `--verbose` for per-file details and debug logging.
+
 
 ## Supported extensions
 
@@ -51,7 +73,7 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, `--re
   `h`, `hpp`, `cs`, `swift`, `dart`, `php`
 - Astro (HTML comments after frontmatter): `astro`
 - MDX (JSX comments after frontmatter): `mdx`
-- HTML-like block comments: `html`, `htm`, `xhtml`, `xml`, `svg`, `svelte`, `md`, `vue`, `hbs`, `handlebars`, `mustache`
+- HTML-like block comments: `html`, `htm`, `xhtml`, `xml`, `svg`, `svelte`, `svx`, `md`, `vue`, `hbs`, `handlebars`, `mustache`
 - CSS-like block comments: `css`, `scss`, `sass`, `less`
 - CMD line comments: `cmd`
 
@@ -62,6 +84,9 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, `--re
 | `holder` | string                     | yes      | Copyright holder name.                                      |
 | `spdx`   | string                     | no       | SPDX license identifier; defaults to "All rights reserved". |
 | `year`   | number or [number, number] | no       | Year or inclusive year range; defaults to current year.     |
+| `ignores`| list of strings            | no       | Glob patterns excluded when collecting files (merged with `--ignore`). |
+
+File collection also applies `.gitignore` rules from the working directory by default.
 
 ## Exit codes
 

@@ -5,6 +5,8 @@ args:
 ignore: []
 expectExit: 1
 expectedOutput:
-  - "Present: source/correct.py"
-  - "External: source/external.py"
-  - "Missing: source/missing.py"
+  - "check - 3 files"
+  - "x missing  source/missing.py"
+  - "External"
+  - "  source/external.py"
+  - "3 checked - 1 missing - 1 external"
