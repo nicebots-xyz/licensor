@@ -3,8 +3,14 @@ val scala3Version = "3.8.3"
 lazy val root = (project in file("."))
   .enablePlugins(BuildInfoPlugin, NativeImagePlugin)
   .settings(
-    nativeImageVersion := "21.0.2",
-    nativeImageJvm := "graalvm-java21",
+    nativeImageInstalled := true,
+    nativeImageGraalHome := {
+      val graalHome = sys.env
+        .get("GRAALVM_HOME")
+        .orElse(sys.env.get("JAVA_HOME"))
+        .getOrElse(sys.props("java.home"))
+      file(graalHome).toPath
+    },
     nativeImageOptions ++= List(
       "--no-fallback",
       "-H:+ReportExceptionStackTraces",

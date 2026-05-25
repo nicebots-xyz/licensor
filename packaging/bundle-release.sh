@@ -3,31 +3,35 @@
 # Copyright: 2026 NiceBots.xyz
 set -euo pipefail
 
-# Assemble licensor release archives from pre-staged platform inputs produced in CI.
+# Assemble native licensor release archives from pre-staged platform inputs produced in CI.
 #
 # Usage: packaging/bundle-release.sh <version> <staging-dir>
 #   staging-dir contains one subdirectory per platform (artifact names from CI), e.g.:
 #     linux-x86_64/licensor-x86_64-unknown-linux-gnu
-#     linux-x86_64/jre/
 #     linux-aarch64/...
-#
-# Temurin JREs are installed in the native-image workflow via actions/setup-java
-# (java-package: jre, java-version-file: .java-version). This script performs no
-# network downloads.
 
 VERSION="${1:?version required}"
 STAGING="${2:?staging directory required}"
-JAR_PATH="${3:-target/scala-*/licensor-assembly-*.jar}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="$ROOT/dist"
-mkdir -p "$DIST"
+WORK_ROOT=""
 
-JAR="$(ls -1 $ROOT/$JAR_PATH 2>/dev/null | head -1)"
-if [[ -z "$JAR" || ! -f "$JAR" ]]; then
-  echo "Assembly jar not found at $ROOT/$JAR_PATH" >&2
+if [[ ! "$VERSION" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([-+][A-Za-z0-9._-]+)?$ ]]; then
+  echo "Release version must look like v1.2.3: $VERSION" >&2
   exit 1
 fi
+
+cleanup() {
+  if [[ -n "$WORK_ROOT" && -d "$WORK_ROOT" ]]; then
+    rm -rf "$WORK_ROOT"
+  fi
+}
+trap cleanup EXIT
+
+rm -rf "$DIST"
+mkdir -p "$DIST"
+WORK_ROOT="$(mktemp -d "$DIST/.work.XXXXXX")"
 
 require_platform_inputs() {
   local platform_dir="$1"
@@ -40,10 +44,6 @@ require_platform_inputs() {
     echo "Missing native binary: $platform_dir/$native_file" >&2
     exit 1
   fi
-  if [[ ! -d "$platform_dir/jre" ]]; then
-    echo "Missing bundled JRE: $platform_dir/jre" >&2
-    exit 1
-  fi
 }
 
 bundle_unix() {
@@ -52,17 +52,11 @@ bundle_unix() {
   local native_file="$3"
   require_platform_inputs "$platform_dir" "$native_file"
 
-  local work="$DIST/_work-$archive_name"
-  rm -rf "$work"
+  local work="$WORK_ROOT/$archive_name"
   mkdir -p "$work"
-  cp "$JAR" "$work/licensor.jar"
-  cp "$ROOT/packaging/licensor" "$work/licensor"
+  cp "$platform_dir/$native_file" "$work/licensor"
   chmod +x "$work/licensor"
-  cp "$platform_dir/$native_file" "$work/licensor-native"
-  chmod +x "$work/licensor-native"
-  cp -a "$platform_dir/jre" "$work/jre"
   tar -C "$work" -czf "$DIST/licensor-${VERSION}-${archive_name}.tar.gz" .
-  rm -rf "$work"
 }
 
 bundle_windows() {
@@ -71,15 +65,10 @@ bundle_windows() {
   local native_file="$3"
   require_platform_inputs "$platform_dir" "$native_file"
 
-  local work="$DIST/_work-$archive_name"
-  rm -rf "$work"
+  local work="$WORK_ROOT/$archive_name"
   mkdir -p "$work"
-  cp "$JAR" "$work/licensor.jar"
-  cp "$ROOT/packaging/licensor.cmd" "$work/licensor.cmd"
   cp "$platform_dir/$native_file" "$work/licensor.exe"
-  cp -a "$platform_dir/jre" "$work/jre"
   (cd "$work" && zip -qr "$DIST/licensor-${VERSION}-${archive_name}.zip" .)
-  rm -rf "$work"
 }
 
 bundle_unix "linux-x86_64" "$STAGING/linux-x86_64" "licensor-x86_64-unknown-linux-gnu"

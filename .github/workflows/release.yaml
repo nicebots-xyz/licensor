@@ -12,98 +12,10 @@ jobs:
       contents: read
 
   native-image:
-    name: "${{ matrix.bundle_id }}"
     needs: quality
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            bundle_id: linux-x86_64
-            asset_name: licensor-x86_64-unknown-linux-gnu
-            native_path: target/native-image/licensor
-            jre_arch: x64
-          - os: ubuntu-24.04-arm
-            bundle_id: linux-aarch64
-            asset_name: licensor-aarch64-unknown-linux-gnu
-            native_path: target/native-image/licensor
-            jre_arch: aarch64
-          - os: macos-15-intel
-            bundle_id: macos-x86_64
-            asset_name: licensor-x86_64-apple-darwin
-            native_path: target/native-image/licensor
-            jre_arch: x64
-          - os: macos-latest
-            bundle_id: macos-aarch64
-            asset_name: licensor-aarch64-apple-darwin
-            native_path: target/native-image/licensor
-            jre_arch: aarch64
-          - os: windows-latest
-            bundle_id: windows-x86_64
-            asset_name: licensor-x86_64-pc-windows.exe
-            native_path: target/native-image/licensor.exe
-            jre_arch: x64
-            vcvars_arch: x64
-          - os: windows-11-arm
-            bundle_id: windows-aarch64
-            asset_name: licensor-aarch64-pc-windows.exe
-            native_path: target/native-image/licensor.exe
-            jre_arch: aarch64
-            vcvars_arch: arm64
-
-    env:
-      JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Java (build)
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version-file: .java-version
-          check-latest: false
-          cache: sbt
-
-      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
-
-      - name: Setup Windows C++ toolchain
-        if: runner.os == 'Windows'
-        uses: ./.github/actions/setup-vcvars
-        with:
-          arch: ${{ matrix.vcvars_arch }}
-
-      - name: Build native image
-        shell: bash
-        run: sbt clean nativeImage
-
-      - name: Set up Temurin JRE for bundling
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version-file: .java-version
-          java-package: jre
-          architecture: ${{ matrix.jre_arch }}
-          check-latest: false
-
-      - name: Stage platform bundle inputs
-        shell: bash
-        run: |
-          set -euo pipefail
-          root="${{ matrix.bundle_id }}"
-          rm -rf "$root"
-          mkdir -p "$root"
-          cp "${{ matrix.native_path }}" "$root/${{ matrix.asset_name }}"
-          cp -a "$JAVA_HOME" "$root/jre"
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b54044e700ef9b7e6c2a1a0e8 # v4.6.2
-        with:
-          name: ${{ matrix.bundle_id }}
-          path: ${{ matrix.bundle_id }}
-          if-no-files-found: error
+    uses: ./.github/workflows/native-image.yaml
+    permissions:
+      contents: read
 
   publish:
     runs-on: ubuntu-latest
@@ -113,19 +25,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Java (build)
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version-file: .java-version
-          check-latest: false
-          cache: sbt
-
-      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
-
-      - name: Build fat jar
-        run: sbt clean assembly
 
       - name: Download platform bundle inputs
         uses: actions/download-artifact@65a88fa8b6b8e273a0a8063d6b5640baa7ceebc3 # v4.1.8
@@ -147,9 +46,7 @@ jobs:
           body: |
             ## Install
 
-            Each archive contains a **GraalVM native binary** (fast startup), a **Temurin 21 JRE** fallback under `jre/`, and `licensor.jar`.
-
-            Bundled JRE version matches the pinned `.java-version` file in the repository (updated via Renovate).
+            Each archive contains a platform-native GraalVM executable. Java is not required at runtime.
 
             | Platform | Archive |
             |----------|---------|
@@ -162,11 +59,11 @@ jobs:
 
             **Linux / macOS:** extract, add the folder to `PATH`, run `licensor --help`.
 
-            **Windows:** extract, add the folder to `PATH`, run `licensor.cmd` or `licensor.exe`.
+            **Windows:** extract, add the folder to `PATH`, run `licensor.exe`.
 
             Verify with `SHA256SUMS.txt`.
 
-            Note: 32-bit Linux (x86) is not supported by GraalVM native-image; use the bundled JRE + jar on those systems.
+            Note: 32-bit Linux (x86) is not supported by this native release matrix.
 
             ---
           files: |

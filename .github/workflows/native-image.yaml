@@ -2,7 +2,22 @@
 # Copyright: 2026 NiceBots.xyz
 name: Native Image
 on:
+  workflow_call:
+    inputs:
+      matrix-json:
+        description: JSON matrix for native-image builds.
+        required: false
+        default: '{"include":[{"os":"ubuntu-latest","bundle_id":"linux-x86_64","asset_name":"licensor-x86_64-unknown-linux-gnu","native_path":"target/native-image/licensor"},{"os":"ubuntu-24.04-arm","bundle_id":"linux-aarch64","asset_name":"licensor-aarch64-unknown-linux-gnu","native_path":"target/native-image/licensor"},{"os":"macos-15-intel","bundle_id":"macos-x86_64","asset_name":"licensor-x86_64-apple-darwin","native_path":"target/native-image/licensor"},{"os":"macos-latest","bundle_id":"macos-aarch64","asset_name":"licensor-aarch64-apple-darwin","native_path":"target/native-image/licensor"},{"os":"windows-latest","bundle_id":"windows-x86_64","asset_name":"licensor-x86_64-pc-windows.exe","native_path":"target/native-image/licensor.exe","vcvars_arch":"x64"},{"os":"windows-11-arm","bundle_id":"windows-aarch64","asset_name":"licensor-aarch64-pc-windows.exe","native_path":"target/native-image/licensor.exe","vcvars_arch":"arm64"}]}'
+        type: string
   workflow_dispatch:
+    inputs:
+      matrix-json:
+        description: JSON matrix for native-image builds. Defaults to a Linux x64 smoke build.
+        required: false
+        default: '{"include":[{"os":"ubuntu-latest","bundle_id":"linux-x86_64","asset_name":"licensor-x86_64-unknown-linux-gnu","native_path":"target/native-image/licensor"}]}'
+
+permissions:
+  contents: read
 
 jobs:
   native-image:
@@ -10,40 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            bundle_id: linux-x86_64
-            asset_name: licensor-x86_64-unknown-linux-gnu
-            native_path: target/native-image/licensor
-            jre_arch: x64
-          - os: ubuntu-24.04-arm
-            bundle_id: linux-aarch64
-            asset_name: licensor-aarch64-unknown-linux-gnu
-            native_path: target/native-image/licensor
-            jre_arch: aarch64
-          - os: macos-15-intel
-            bundle_id: macos-x86_64
-            asset_name: licensor-x86_64-apple-darwin
-            native_path: target/native-image/licensor
-            jre_arch: x64
-          - os: macos-latest
-            bundle_id: macos-aarch64
-            asset_name: licensor-aarch64-apple-darwin
-            native_path: target/native-image/licensor
-            jre_arch: aarch64
-          - os: windows-latest
-            bundle_id: windows-x86_64
-            asset_name: licensor-x86_64-pc-windows.exe
-            native_path: target/native-image/licensor.exe
-            jre_arch: x64
-            vcvars_arch: x64
-          - os: windows-11-arm
-            bundle_id: windows-aarch64
-            asset_name: licensor-aarch64-pc-windows.exe
-            native_path: target/native-image/licensor.exe
-            jre_arch: aarch64
-            vcvars_arch: arm64
+      matrix: ${{ fromJSON(inputs['matrix-json']) }}
 
     env:
       JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8
@@ -51,11 +33,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up Java (build)
+      - name: Set up GraalVM
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
-          distribution: temurin
-          java-version-file: .java-version
+          distribution: graalvm
+          java-version: "21"
           check-latest: false
           cache: sbt
 
@@ -71,16 +53,7 @@ jobs:
         shell: bash
         run: sbt -v clean nativeImage
 
-      - name: Set up Temurin JRE for bundling
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version-file: .java-version
-          java-package: jre
-          architecture: ${{ matrix.jre_arch }}
-          check-latest: false
-
-      - name: Stage platform bundle inputs
+      - name: Stage native binary
         shell: bash
         run: |
           set -euo pipefail
@@ -88,7 +61,8 @@ jobs:
           rm -rf "$root"
           mkdir -p "$root"
           cp "${{ matrix.native_path }}" "$root/${{ matrix.asset_name }}"
-          cp -a "$JAVA_HOME" "$root/jre"
+          chmod +x "$root/${{ matrix.asset_name }}"
+          "$root/${{ matrix.asset_name }}" --help >/dev/null
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b54044e700ef9b7e6c2a1a0e8 # v4.6.2
         with:
