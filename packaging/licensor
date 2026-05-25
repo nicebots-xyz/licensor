@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! command -v java >/dev/null 2>&1; then
-  echo "licensor: Java not found. Please install a JRE/JDK (Java 21 recommended) and ensure 'java' is in PATH." >&2
-  exit 127
-fi
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
   DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
@@ -14,4 +9,18 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
 
-exec java ${JAVA_OPTS:-} -jar "$DIR/licensor.jar" "$@"
+if [[ -x "$DIR/licensor-native" ]]; then
+  exec "$DIR/licensor-native" "$@"
+fi
+
+JAVA_BIN=""
+if [[ -x "$DIR/jre/bin/java" ]]; then
+  JAVA_BIN="$DIR/jre/bin/java"
+elif command -v java >/dev/null 2>&1; then
+  JAVA_BIN="java"
+else
+  echo "licensor: Java not found. Install Java 21 or use a bundle that includes jre/." >&2
+  exit 127
+fi
+
+exec "$JAVA_BIN" ${JAVA_OPTS:-} -jar "$DIR/licensor.jar" "$@"

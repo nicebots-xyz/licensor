@@ -68,6 +68,23 @@ Use `-c` to point at a different config path, `--ignore` to exclude globs, and `
 - `0`: Success (check passes; add did nothing).
 - `1`: Failure (missing licenses in check, files updated in add, or no inputs matched).
 
+## Native binaries and JRE bundles
+
+Tagged releases (`v*.*.*`) publish per-platform archives built in CI:
+
+- **Native executable** (`licensor-native` / `licensor.exe`) for fast cold start
+- **Temurin 21 JRE** under `jre/` when the native binary cannot run
+- **Fat JAR** (`licensor.jar`) and shell/cmd launchers
+
+Supported native targets: Linux (x64, arm64), macOS (Intel, Apple Silicon), Windows (x64, arm64). 32-bit Linux is not built (GraalVM limitation); use the JRE + JAR launcher instead.
+
+Local native build (requires GraalVM via the sbt plugin):
+
+```bash
+sbt nativeImage
+# binary: target/native-image/licensor
+```
+
 ## GitHub Actions
 
 ### `setup-licensor`

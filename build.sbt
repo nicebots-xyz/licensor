@@ -1,7 +1,15 @@
 val scala3Version = "3.8.3"
 
-lazy val root = (project in file(".")).enablePlugins(BuildInfoPlugin)
+lazy val root = (project in file("."))
+  .enablePlugins(BuildInfoPlugin, NativeImagePlugin)
   .settings(
+    nativeImageJvm := "graalvm-java17",
+    nativeImageOptions ++= List(
+      "--no-fallback",
+      "-H:+ReportExceptionStackTraces",
+      "--initialize-at-build-time=org.slf4j,ch.qos.logback",
+      "-H:IncludeResources=logback.xml"
+    ),
     buildInfoPackage := "xyz.nicebots",
     buildInfoKeys    := Seq[BuildInfoKey](name, version),
     buildInfoObject   := "BuildInfo",
