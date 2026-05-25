@@ -24,8 +24,8 @@ object FileWalker:
     else
       val ignoreRoot = gitignoreRoot.getOrElse(root)
       val gitignore  = if respectGitignore then Some(GitignoreMatcher(ignoreRoot)) else None
-      val result    = Vector.newBuilder[os.Path]
-      val visitor   = new SimpleFileVisitor[Path]:
+      val result     = Vector.newBuilder[os.Path]
+      val visitor    = new SimpleFileVisitor[Path]:
         override def preVisitDirectory(
             dir: Path,
             attrs: BasicFileAttributes
