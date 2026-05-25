@@ -23,10 +23,6 @@ final class GitignoreMatcher private (root: os.Path):
       )
 
   def isIgnored(path: os.Path, isDirectory: Boolean): Boolean =
-    val relative =
-      try GitignoreMatcher.normalizeRelative(path.relativeTo(root).toString)
-      catch case _: Throwable => return false
-
     val segments =
       try path.relativeTo(root).segments
       catch case _: Throwable => Vector.empty[String]
