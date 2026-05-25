@@ -41,7 +41,7 @@ licensor add "src/**/*.py"
 licensor check "src/**/*.py"
 ```
 
-Use `-c` to point at a different config path, `--ignore` to exclude globs, and `--verbose` for debug logging.
+Use `-c` to point at a different config path, `--ignore` to exclude globs, `--respect-gitignore` / `--no-respect-gitignore` to control `.gitignore` filtering (on by default), and `--verbose` for debug logging.
 
 ## Supported extensions
 

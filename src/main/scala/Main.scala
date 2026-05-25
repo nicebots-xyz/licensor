@@ -44,6 +44,9 @@ case class CommonOptions(
     config: String = "licensor-config.yaml",
     @HelpMessage("Glob to ignore (can be specified multiple times)")
     ignore: Vector[String] = Vector.empty,
+    @HelpMessage("Respect .gitignore patterns when collecting files (default: enabled)")
+    @Name("respect-gitignore")
+    respectGitignore: Option[Boolean] = Some(true),
     @HelpMessage("Enable verbose logging")
     verbose: Option[Boolean] = Some(false)
 ) extends BaseOptions
@@ -107,12 +110,16 @@ def setupCommand(
 
   val baseDir    = os.pwd
   val inputGlobs = args.all.toVector
-  val inputFiles = CliUtils.collectFiles(inputGlobs, opts.ignore, baseDir)
+
+  val config           = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
+  val mergedIgnores    = config.ignores ++ opts.ignore
+  val respectGitignore = opts.respectGitignore.getOrElse(true)
+  val inputFiles       =
+    CliUtils.collectFiles(inputGlobs, mergedIgnores, baseDir, respectGitignore)
   if inputFiles.isEmpty then
     logger.error("No input files matched.")
     sys.exit(1)
 
-  val config      = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
   val licenseText = LicensingConfig.toLicenseText(config)
 
   val handlerList = Seq(
