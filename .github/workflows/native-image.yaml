@@ -64,7 +64,7 @@ jobs:
           chmod +x "$root/${{ matrix.asset_name }}"
           "$root/${{ matrix.asset_name }}" --help >/dev/null
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b54044e700ef9b7e6c2a1a0e8 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.bundle_id }}
           path: ${{ matrix.bundle_id }}
