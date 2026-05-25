@@ -31,5 +31,6 @@ object TextFiles:
         if bytes.isEmpty then Some("")
         else
           val buffer = java.nio.ByteBuffer.wrap(bytes)
+          utf8Decoder.reset()
           Some(utf8Decoder.decode(buffer).toString)
       catch case _: Exception => None

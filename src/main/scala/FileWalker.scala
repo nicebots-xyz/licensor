@@ -20,7 +20,9 @@ object FileWalker:
       gitignoreRoot: Option[os.Path] = None
   ): Vector[os.Path] =
     if !os.exists(root) then Vector.empty
-    else if os.isFile(root) then Vector(root)
+    else if os.isFile(root) then
+      if os.isLink(root) then Vector.empty
+      else Vector(root)
     else
       val ignoreRoot = gitignoreRoot.getOrElse(root)
       val gitignore  = if respectGitignore then Some(GitignoreMatcher(ignoreRoot)) else None

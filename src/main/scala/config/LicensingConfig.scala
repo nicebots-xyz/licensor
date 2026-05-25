@@ -101,11 +101,20 @@ object LicensingConfig:
 
     val yearValue = values.get("year")
     val years     = parseYears(yearValue)
+    val ignores   = parseIgnores(values.get("ignores"))
 
     for
-      h <- holder
-      y <- years
-    yield LicensingConfig(spdxId = spdxId, holder = h, years = y)
+      h  <- holder
+      y  <- years
+      ig <- ignores
+    yield LicensingConfig(spdxId = spdxId, holder = h, years = y, ignores = ig)
+
+  private def parseIgnores(value: Object): Either[String, Vector[String]] =
+    value match
+      case null           => Right(Vector.empty)
+      case list: JList[?] =>
+        Right(list.toArray.toVector.map(_.toString.trim).filter(_.nonEmpty))
+      case _ => Left("Expected 'ignores' to be a list of strings")
 
   /** Parse the optional year value into a YearRange.
     *
