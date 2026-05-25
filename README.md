@@ -9,7 +9,7 @@ Copyright: 2026 NiceBots.xyz
 $ licensor check source/*
 
 check - 3 files
-x missing  source/missing.py
+X missing  source/missing.py
 
 External
   source/external.py

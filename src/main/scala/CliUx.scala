@@ -7,7 +7,7 @@ package xyz.nicebots
   * Philosophy (aligned with clig.dev / modern CLI practice):
   *   - Paths and bulk text stay unstyled for readability and scriptability.
   *   - Color marks meaning (failure, success, muted structure) — not decoration.
-  *   - Symbols reinforce status; ASCII fallbacks when plain or NO_COLOR.
+  *   - Status markers use ASCII O/X (styled when color is enabled).
   *   - Progress is transient and understated; results are the focus.
   */
 object CliUx:
@@ -26,22 +26,29 @@ object CliUx:
   def colorEnabled: Boolean =
     !plainOutput && (sys.env.contains("FORCE_COLOR") || System.console() != null)
 
-  def unicodeSymbols: Boolean = colorEnabled && !sys.env.contains("LICENSOR_ASCII")
-
   object Symbols:
-    def ok: String    = if unicodeSymbols then "✓" else "OK"
-    def fail: String  = if unicodeSymbols then "✗" else "x"
-    def added: String = if unicodeSymbols then "+" else "+"
+    def ok: String    = statusSymbol(StatusKind.Ok, "O")
+    def fail: String  = statusSymbol(StatusKind.Missing, "X")
+    def added: String = "+"
     def sep: String   = "-"
     def rule: String  = "-"
+
+  /** Bold colored O/X when color is on; plain letters when --no-color or NO_COLOR. */
+  private def statusSymbol(kind: StatusKind, letter: String): String =
+    if !colorEnabled then letter
+    else
+      val bold = fansi.Bold.On(letter)
+      kind match
+        case StatusKind.Ok      => fansi.Color.Green(bold).render
+        case StatusKind.Missing => fansi.Color.Red(bold).render
+        case _                  => bold.render
 
   def fatal(message: String): Nothing =
     System.err.println(renderError(message))
     sys.exit(1)
 
   def renderError(message: String): String =
-    if colorEnabled then fansi.Color.Red(s"${Symbols.fail} $message").render
-    else s"${Symbols.fail} $message"
+    s"${Symbols.fail} $message"
 
   def dim(text: String): String =
     if colorEnabled then fansi.Color.DarkGray(text).render else text

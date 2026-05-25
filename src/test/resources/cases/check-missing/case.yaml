@@ -6,5 +6,5 @@ ignore: []
 expectExit: 1
 expectedOutput:
   - "check - 1 file"
-  - "x missing  source/missing.py"
+  - "X missing  source/missing.py"
   - "1 checked - 1 missing"

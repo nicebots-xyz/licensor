@@ -6,6 +6,6 @@ ignore: []
 expectExit: 1
 expectedOutput:
   - "check - 2 files"
-  - "x missing  source/one.astro"
-  - "x missing  source/one.mdx"
+  - "X missing  source/one.astro"
+  - "X missing  source/one.mdx"
   - "2 checked - 2 missing"
