@@ -5,28 +5,9 @@ Copyright: 2026 NiceBots.xyz
 
 # Licensor
 
-```console
-$ licensor check source/*
-
-check - 3 files
-X missing  source/missing.py
-
-External
-  source/external.py
-
-----------------------------------
-3 checked - 1 missing - 1 external
-
-$ licensor add --ignore '**/skip.py' source/*
-
-add - 1 file
-+ added  source/one.py
-
-----------------------------
-1 file updated - 1 scanned
-```
-
 Licensor adds copyright notices to files, including formats that need bespoke placement rules.
+
+![](/images/carbon-terminal-example.png)
 
 ## Why this exists
 
