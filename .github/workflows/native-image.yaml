@@ -29,9 +29,11 @@ jobs:
           - os: windows-latest
             asset_name: licensor-x86_64-pc-windows.exe
             native_path: target/native-image/licensor.exe
+            msvc_arch: x64
           - os: windows-11-arm
             asset_name: licensor-aarch64-pc-windows.exe
             native_path: target/native-image/licensor.exe
+            msvc_arch: x86_arm64
 
     env:
       JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8
@@ -49,14 +51,22 @@ jobs:
 
       - name: Setup Windows C++ toolchain
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: TheMrMilchmann/setup-msvc-dev@ced9887c29958f18f71b18c99d9eb0837859434c # v3.0.2
+        with:
+          arch: ${{ matrix.msvc_arch }}
 
       - name: Build native image
         shell: bash
         run: sbt -v clean nativeImage
 
+      - name: Stage native binary for artifact upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "${{ matrix.native_path }}" "${{ matrix.asset_name }}"
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b54044e700ef9b7e6c2a1a0e8 # v4.6.2
         with:
           name: ${{ matrix.asset_name }}
-          path: ${{ matrix.native_path }}
+          path: ${{ matrix.asset_name }}
           if-no-files-found: error

@@ -25,30 +25,33 @@ if [[ -z "$JAR" || ! -f "$JAR" ]]; then
   exit 1
 fi
 
-TEMURIN_RELEASE="jdk-21.0.7%2B6"
-TEMURIN_BASE="https://github.com/adoptium/temurin21-binaries/releases/download/${TEMURIN_RELEASE}"
-
 fetch_jre() {
   local platform="$1"
   local dest="$2"
-  local url=""
+  local os="" arch=""
   case "$platform" in
-    linux-x64)   url="${TEMURIN_BASE}/OpenJDK21U-jre_x64_linux_hotspot_21.0.7_6.tar.gz" ;;
-    linux-aarch64) url="${TEMURIN_BASE}/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.7_6.tar.gz" ;;
-    macos-x64)   url="${TEMURIN_BASE}/OpenJDK21U-jre_x64_mac_hotspot_21.0.7_6.tar.gz" ;;
-    macos-aarch64) url="${TEMURIN_BASE}/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.7_6.tar.gz" ;;
-    windows-x64) url="${TEMURIN_BASE}/OpenJDK21U-jre_x64_windows_hotspot_21.0.7_6.zip" ;;
-    windows-aarch64) url="${TEMURIN_BASE}/OpenJDK21U-jre_aarch64_windows_hotspot_21.0.7_6.zip" ;;
+    linux-x64)       os=linux; arch=x64 ;;
+    linux-aarch64)   os=linux; arch=aarch64 ;;
+    macos-x64)       os=mac; arch=x64 ;;
+    macos-aarch64)   os=mac; arch=aarch64 ;;
+    windows-x64)     os=windows; arch=x64 ;;
+    windows-aarch64) os=windows; arch=aarch64 ;;
     *) echo "Unknown JRE platform: $platform" >&2; return 1 ;;
   esac
+
+  local api="https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=${arch}&image_type=jre&os=${os}"
+  local url
+  url="$(curl -fsSL "$api" | python3 -c "import json,sys; print(json.load(sys.stdin)[0]['binary']['package']['link'])")"
+
   mkdir -p "$dest"
   local archive
   archive="$(mktemp)"
   curl -fsSL "$url" -o "$archive"
   if [[ "$url" == *.zip ]]; then
+    mkdir -p "$dest/jre"
     unzip -q "$archive" -d "$dest"
-    mv "$dest"/jdk-*/* "$dest/jre/" 2>/dev/null || mv "$dest"/jdk-* "$dest/jre"
-    rmdir "$dest"/jdk-* 2>/dev/null || true
+    rm -rf "$dest/jre"
+    mv "$dest"/jdk-* "$dest/jre"
   else
     tar -xzf "$archive" -C "$dest"
     mv "$dest"/jdk-* "$dest/jre"
