@@ -36,19 +36,9 @@ trait FileHandler:
     if checkLicense(fileDump, licenseText) == LicenseState.Missing then (rendered + fileDump, true)
     else (fileDump, false)
 
-  /** Check whether the file starts with the rendered license header.
-    *
-    * @param fileDump
-    *   full file contents
-    * @param licenseText
-    *   plain-text license content
-    * @return
-    *   true if the rendered header appears at the beginning of the file
-    */
-  private def hasLicense(fileDump: String, licenseText: String): Boolean =
-    val expectedFirst = generateLicense(licenseText).linesIterator.nextOption.getOrElse("")
-    val actualFirst   = fileDump.linesIterator.nextOption.getOrElse("")
-    actualFirst == expectedFirst
+  /** Check whether the file begins with the fully rendered license header block. */
+  private def hasRenderedHeader(fileDump: String, licenseText: String): Boolean =
+    fileDump.startsWith(generateLicense(licenseText))
 
   /** Detect another license header by scanning for external markers.
     *
@@ -64,7 +54,7 @@ trait FileHandler:
   private def hasExternal(
       fileDump: String,
       externalMarkers: Vector[String] = Vector("Copyright", "SPDX-License-Identifier"),
-      scanLines: Int = 3
+      scanLines: Int = 5
   ): Boolean =
     val headerLines = fileDump.linesIterator.take(scanLines).map(_.trim).toVector
     externalMarkers.exists(marker => headerLines.exists(_.contains(marker)))
@@ -82,6 +72,6 @@ trait FileHandler:
       fileDump: String,
       licenseText: String
   ): LicenseState =
-    if hasLicense(fileDump, licenseText) then LicenseState.Present
+    if hasRenderedHeader(fileDump, licenseText) then LicenseState.Present
     else if hasExternal(fileDump) then LicenseState.External
     else LicenseState.Missing

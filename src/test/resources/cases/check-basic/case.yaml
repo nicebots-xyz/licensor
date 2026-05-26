@@ -5,5 +5,5 @@ args:
 ignore: []
 expectExit: 0
 expectedOutput:
-  - "Present: source/ok.py"
-  - "Skipped: 0"
+  - "check - 1 file"
+  - "1 checked - all clear"

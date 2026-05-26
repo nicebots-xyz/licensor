@@ -5,11 +5,13 @@ args:
 ignore: [ ]
 expectExit: 1
 expectedOutput:
-  - "Added: source/one.py"
-  - "Added: source/one.scala"
-  - "Added: source/one.css"
-  - "Added: source/one.html"
-  - "Added: source/one.astro"
-  - "Added: source/one.mdx"
-  - "Added: source/one.cmd"
-  - "Skipped: 0"
+  - "add - 8 files"
+  - "+ added  source/one.py"
+  - "+ added  source/one.scala"
+  - "+ added  source/one.css"
+  - "+ added  source/one.html"
+  - "+ added  source/one.astro"
+  - "+ added  source/one.mdx"
+  - "+ added  source/one.svx"
+  - "+ added  source/one.cmd"
+  - "8 files updated - 8 scanned"

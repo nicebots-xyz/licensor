@@ -5,6 +5,7 @@ args:
 ignore: [ ]
 expectExit: 1
 expectedOutput:
-  - "Added: source/app.py"
-  - "Added: source/utils/helper.py"
-  - "Skipped: 0"
+  - "add - 2 files"
+  - "+ added  source/app.py"
+  - "+ added  source/utils/helper.py"
+  - "2 files updated - 2 scanned"

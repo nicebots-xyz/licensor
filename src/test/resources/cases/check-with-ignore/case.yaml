@@ -7,5 +7,6 @@ ignore:
   - "**/skip.py"
 expectExit: 1
 expectedOutput:
-  - "Present: source/app/main.py"
-  - "Missing: source/app/missing.py"
+  - "check - 2 files"
+  - "X missing  source/app/missing.py"
+  - "2 checked - 1 missing"

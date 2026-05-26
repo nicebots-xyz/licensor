@@ -137,6 +137,37 @@ class CliUtilsSpec extends AnyFunSuite:
     assert(!relativePaths.contains("build/output.py"), "Should exclude build/output.py")
   }
 
+  test("respect-gitignore skips paths listed in .gitignore") {
+    val tempDir = Files.createTempDirectory("test")
+    val srcDir  = tempDir.resolve("src")
+    val nodeDir = tempDir.resolve("node_modules/pkg")
+
+    Files.writeString(tempDir.resolve(".gitignore"), "node_modules/\n")
+    Files.createDirectories(nodeDir)
+    Files.createDirectories(srcDir)
+    Files.writeString(nodeDir.resolve("index.js"), "js")
+    Files.writeString(srcDir.resolve("main.py"), "content")
+
+    val baseDir       = os.Path(tempDir)
+    val result        = CliUtils.collectFiles(Vector("**/*"), Vector.empty, baseDir)
+    val relativePaths = result.map(_.relativeTo(baseDir).toString).sorted
+
+    assert(relativePaths.contains("src/main.py"))
+    assert(!relativePaths.exists(_.contains("node_modules")))
+  }
+
+  test("extension hints from globs reduce candidates") {
+    val tempDir = Files.createTempDirectory("test")
+    val srcDir  = tempDir.resolve("src")
+
+    Files.createDirectories(srcDir)
+    Files.writeString(srcDir.resolve("main.py"), "py")
+    Files.writeString(srcDir.resolve("readme.md"), "md")
+
+    val hints = FileWalker.extensionHintsFromGlobs(Vector("src/**/*.py"))
+    assert(hints == Set("py"))
+  }
+
   test("combining directory path and glob patterns") {
     val tempDir = Files.createTempDirectory("test")
     val srcDir  = tempDir.resolve("src")

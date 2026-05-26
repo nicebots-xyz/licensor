@@ -22,21 +22,10 @@ import handlers.{
   SlashSlashHandler
 }
 
-/** Base options for all commands.
-  */
 @AppName("licensor")
 @AppVersion(xyz.nicebots.BuildInfo.version)
 abstract class BaseOptions()
 
-/** Common options for all commands.
-  *
-  * @param config
-  *   configuration file path
-  * @param ignore
-  *   glob patterns to ignore
-  * @param verbose
-  *   enable verbose logging
-  */
 @ArgsName("files")
 case class CommonOptions(
     @HelpMessage("Configuration file path")
@@ -44,38 +33,25 @@ case class CommonOptions(
     config: String = "licensor-config.yaml",
     @HelpMessage("Glob to ignore (can be specified multiple times)")
     ignore: Vector[String] = Vector.empty,
-    @HelpMessage("Enable verbose logging")
-    verbose: Option[Boolean] = Some(false)
+    @HelpMessage("Respect .gitignore patterns when collecting files (default: enabled)")
+    @Name("respect-gitignore")
+    respectGitignore: Option[Boolean] = Some(true),
+    @HelpMessage("Enable verbose logging and per-file details")
+    verbose: Boolean = false,
+    @HelpMessage("Disable color and Unicode symbols")
+    @Name("no-color")
+    noColor: Boolean = false
 ) extends BaseOptions
 
-/** Empty options.
-  */
 case class NoOptions() extends BaseOptions
 
-/** Adjust the root logger level.
-  *
-  * @param level
-  *   target log level
-  */
 def setLogLevel(level: Level): Unit =
   val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
   rootLogger.asInstanceOf[Logger].setLevel(level)
 
-/** Results from common setup.
-  *
-  * Contains all the data needed for both check and add commands after performing initial setup.
-  * This includes the working directory, collected files, loaded license configuration, and the
-  * handler registry.
-  *
-  * @param baseDir
-  *   base directory for relative path calculations and file operations
-  * @param inputFiles
-  *   collected input files matching the glob patterns and not excluded by ignore patterns
-  * @param licenseText
-  *   license text loaded and formatted from the configuration file
-  * @param registry
-  *   handler registry mapping file extensions to appropriate handlers
-  */
+def applyColorOptions(opts: CommonOptions): Unit =
+  CliUx.configure(opts.noColor)
+
 case class SetupContext(
     baseDir: os.Path,
     inputFiles: Vector[os.Path],
@@ -83,36 +59,23 @@ case class SetupContext(
     registry: HandlerRegistry
 )
 
-/** Perform common setup for commands.
-  *
-  * Handles verbose logging configuration, file collection from glob patterns, config loading, and
-  * handler initialization. This function exits the program with status 1 if no input files are
-  * found, if the config file cannot be loaded, or if duplicate extensions are detected in handlers.
-  *
-  * @param opts
-  *   common options including config path, ignore patterns, and verbose flag
-  * @param args
-  *   remaining arguments containing glob patterns for input files
-  * @param logger
-  *   logger instance for error reporting
-  * @return
-  *   setup context containing base directory, input files, license text, and handler registry
-  */
 def setupCommand(
     opts: CommonOptions,
     args: RemainingArgs,
     logger: org.slf4j.Logger
 ): SetupContext =
-  if opts.verbose.getOrElse(false) then setLogLevel(Level.DEBUG)
+  applyColorOptions(opts)
+  if opts.verbose then setLogLevel(Level.DEBUG)
 
-  val baseDir    = os.pwd
-  val inputGlobs = args.all.toVector
-  val inputFiles = CliUtils.collectFiles(inputGlobs, opts.ignore, baseDir)
-  if inputFiles.isEmpty then
-    logger.error("No input files matched.")
-    sys.exit(1)
+  val baseDir          = os.pwd
+  val inputGlobs       = args.all.toVector
+  val config           = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
+  val mergedIgnores    = config.ignores ++ opts.ignore
+  val respectGitignore = opts.respectGitignore.getOrElse(true)
+  val inputFiles       =
+    CliUtils.collectFiles(inputGlobs, mergedIgnores, baseDir, respectGitignore)
+  if inputFiles.isEmpty then CliUx.fatal("No input files matched.")
 
-  val config      = CliUtils.loadConfigOrExit(opts.config, baseDir, logger)
   val licenseText = LicensingConfig.toLicenseText(config)
 
   val handlerList = Seq(
@@ -126,161 +89,92 @@ def setupCommand(
   )
 
   val registry =
-    try {
-      new HandlerRegistry(handlerList)
-    } catch {
+    try new HandlerRegistry(handlerList)
+    catch
       case e: DuplicateExtensionException =>
-        logger.error(s"Handler configuration error: ${e.getMessage}")
-        sys.exit(1)
-    }
+        CliUx.fatal(s"Handler configuration error: ${e.getMessage}")
 
   SetupContext(baseDir, inputFiles, licenseText, registry)
 
-/** Check command entry point.
-  *
-  * Verifies that all input files contain the expected license header. Exits with a non-zero status
-  * if any files are missing the license or have an external license.
-  *
-  * @example
-  *   {{{
-  *   licensor check src/**/*.scala
-  *   }}}
-  */
 object CheckCommand extends Command[CommonOptions]:
   override def name  = "check"
   private val logger = LoggerFactory.getLogger(getClass)
 
-  /** Run the check command.
-    *
-    * Scans all input files and reports license header status. Files without the expected license
-    * header or with external licenses cause the command to exit with status 1.
-    *
-    * @param opts
-    *   command options (config path, ignore patterns, verbose flag)
-    * @param args
-    *   remaining arguments containing glob patterns for files to check
-    */
-  override def run(opts: CommonOptions, args: RemainingArgs): Unit = {
+  override def run(opts: CommonOptions, args: RemainingArgs): Unit =
     val ctx     = setupCommand(opts, args, logger)
-    var missing = 0
-    var skipped = 0
+    val targets = loadProcessable(ctx)
+    if targets.isEmpty then CliUx.fatal("No processable files matched.")
 
-    ctx.inputFiles.foreach { path =>
-      val ext = extensionOf(path)
-      ctx.registry.getHandler(ext) match
-        case None =>
-          skipped += 1
-          logger.warn(s"Skipping unsupported file type: ${formatPath(ctx.baseDir, path)}")
-        case Some(handler) =>
-          val fileDump = Files.readString(path.toNIO, StandardCharsets.UTF_8)
-          handler.checkLicense(fileDump, ctx.licenseText) match
-            case LicenseState.Present =>
-              logger.info(s"Present: ${formatPath(ctx.baseDir, path)}")
-            case LicenseState.External =>
-              logger.info(s"External: ${formatPath(ctx.baseDir, path)}")
-            case LicenseState.Missing =>
-              missing += 1
-              logger.warn(s"Missing: ${formatPath(ctx.baseDir, path)}")
+    val externalPaths = Vector.newBuilder[String]
+    var missing       = 0
+    val progress      = CliUx.Progress(targets.length, "Checking")
+
+    CliUx.commandHeader("check", targets.length)
+
+    targets.zipWithIndex.foreach { case (file, idx) =>
+      progress.update(idx + 1)
+      file.handler.checkLicense(file.content, ctx.licenseText) match
+        case LicenseState.Present =>
+          if opts.verbose then
+            progress.clearForOutput()
+            logger.debug(s"Present: ${file.relPath}")
+            CliUx.presentLine(file.relPath)
+        case LicenseState.External =>
+          externalPaths += file.relPath
+          if opts.verbose then logger.debug(s"External: ${file.relPath}")
+        case LicenseState.Missing =>
+          missing += 1
+          progress.clearForOutput()
+          CliUx.missingLine(file.relPath)
+          if opts.verbose then logger.debug(s"Missing: ${file.relPath}")
     }
 
-    logger.info(s"Skipped: $skipped")
+    progress.finish()
+    val externals = externalPaths.result().distinct
+    CliUx.externalSection(externals)
+    CliUx.summaryCheck(targets.length, missing, externals.size)
     if missing > 0 then sys.exit(1)
-  }
 
-/** Add command entry point.
-  *
-  * Adds the configured license header to all input files that are missing it. Files that already
-  * have the correct license header are left unchanged. Exits with a non-zero status if no files
-  * were modified.
-  *
-  * @example
-  *   {{{
-  *   licensor add src/**/*.scala
-  *   }}}
-  */
 object AddCommand extends Command[CommonOptions]:
   override def name  = "add"
   private val logger = LoggerFactory.getLogger(getClass)
 
-  /** Run the add command.
-    *
-    * Adds license headers to all input files that don't have one. Files that already have the
-    * correct license are skipped. The command exits with status 1 if no files were modified.
-    *
-    * @param opts
-    *   command options (config path, ignore patterns, verbose flag)
-    * @param args
-    *   remaining arguments containing glob patterns for files to process
-    */
-  override def run(opts: CommonOptions, args: RemainingArgs): Unit = {
+  override def run(opts: CommonOptions, args: RemainingArgs): Unit =
     val ctx     = setupCommand(opts, args, logger)
-    var added   = 0
-    var skipped = 0
+    val targets = loadProcessable(ctx)
+    if targets.isEmpty then CliUx.fatal("No processable files matched.")
 
-    ctx.inputFiles.foreach { path =>
-      val ext = extensionOf(path)
-      ctx.registry.getHandler(ext) match
-        case None =>
-          skipped += 1
-          logger.warn(s"Skipping unsupported file type: ${formatPath(ctx.baseDir, path)}")
-        case Some(handler) =>
-          val fileDump          = Files.readString(path.toNIO, StandardCharsets.UTF_8)
-          val (updated, didAdd) = handler.addLicense(fileDump, ctx.licenseText)
-          if didAdd then
-            Files.writeString(path.toNIO, updated, StandardCharsets.UTF_8)
-            added += 1
-            logger.info(s"Added: ${formatPath(ctx.baseDir, path)}")
-          else logger.info(s"Unchanged: ${formatPath(ctx.baseDir, path)}")
+    var added    = 0
+    val progress = CliUx.Progress(targets.length, "Updating")
+
+    CliUx.commandHeader("add", targets.length)
+
+    targets.zipWithIndex.foreach { case (file, idx) =>
+      progress.update(idx + 1)
+      val (updated, didAdd) = file.handler.addLicense(file.content, ctx.licenseText)
+      if didAdd then
+        Files.writeString(file.path.toNIO, updated, StandardCharsets.UTF_8)
+        added += 1
+        progress.clearForOutput()
+        CliUx.addedLine(file.relPath)
+        if opts.verbose then logger.debug(s"Added: ${file.relPath}")
+      else if opts.verbose then
+        logger.debug(s"Unchanged: ${file.relPath}")
+        progress.clearForOutput()
+        CliUx.unchangedLine(file.relPath)
     }
 
-    logger.info(s"Skipped: $skipped")
+    progress.finish()
+    CliUx.summaryAdd(targets.length, added)
     if added == 0 then sys.exit(0) else sys.exit(1)
-  }
 
-/** Version command entry point.
-  *
-  * @example
-  *   {{{
-  *   licensor add src/**/*.scala
-  *   }}}
-  */
 object VersionCommand extends Command[NoOptions]:
   override def name = "version"
 
-  /** Run the version command
-    *
-    * @param opts
-    *   null
-    * @param args
-    *   remaining arguments containing glob patterns for files to process
-    */
-  override def run(opts: NoOptions, args: RemainingArgs): Unit = {
-    val appVersion = xyz.nicebots.BuildInfo.version
+  override def run(opts: NoOptions, args: RemainingArgs): Unit =
+    CliUx.line(s"licensor ${xyz.nicebots.BuildInfo.version}")
+    CliUx.line(CliUx.dim("https://github.com/NiceBots/licensor"))
 
-    println(s"licensor $appVersion")
-
-    println("Copyright: NiceBots.xyz")
-    println("Released under the MIT license")
-    println("Use licensor --help for help")
-    println("https://github.com/NiceBots/licensor")
-
-  }
-
-/** CLI entry point.
-  *
-  * Main application entry point for the licensor tool. Provides commands for checking and adding
-  * license headers to source files.
-  *
-  * Available commands:
-  *   - `check`: Verify that files contain the expected license header
-  *   - `add`: Add license headers to files that don't have them
-  *
-  * @example
-  *   {{{
-  *   licensor check src/**/*.scala
-  *   licensor add --config my-config.yaml src/**/*.scala
-  *   }}}
-  */
 object Main extends CommandsEntryPoint:
   override def progName = "licensor"
 
@@ -290,27 +184,27 @@ object Main extends CommandsEntryPoint:
     AddCommand
   )
 
-/** Extract the lowercase extension from a path.
-  *
-  * @param path
-  *   input file path
-  * @return
-  *   extension without a leading dot, or empty string
-  */
+private case class LoadedFile(
+    path: os.Path,
+    relPath: String,
+    handler: FileHandler,
+    content: String
+)
+
+private def loadProcessable(ctx: SetupContext): Vector[LoadedFile] =
+  ctx.inputFiles.flatMap { path =>
+    ctx.registry.getHandler(extensionOf(path)).flatMap { handler =>
+      TextFiles.readUtf8(path).map { content =>
+        LoadedFile(path, formatPath(ctx.baseDir, path), handler, content)
+      }
+    }
+  }
+
 private def extensionOf(path: os.Path): String =
   val name     = path.last
   val dotIndex = name.lastIndexOf('.')
   if dotIndex < 0 || dotIndex == name.length - 1 then ""
   else name.substring(dotIndex + 1).toLowerCase
 
-/** Format a path relative to a base directory.
-  *
-  * @param baseDir
-  *   base directory for relative paths
-  * @param path
-  *   absolute path to format
-  * @return
-  *   relative path with forward slashes
-  */
 private def formatPath(baseDir: os.Path, path: os.Path): String =
   path.relativeTo(baseDir).toString

@@ -95,6 +95,7 @@ class CliSpec extends AnyFunSuite:
     ) ++ args
     val pb = new ProcessBuilder(cmd*)
     pb.directory(workDir.toFile)
+    pb.environment().put("LICENSOR_PLAIN_OUTPUT", "1")
     pb.redirectErrorStream(true)
     val proc   = pb.start()
     val output = new String(proc.getInputStream.readAllBytes(), StandardCharsets.UTF_8)
