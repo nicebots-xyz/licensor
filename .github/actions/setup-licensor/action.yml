@@ -28,7 +28,7 @@ runs:
           macOS-X64)     ASSET="licensor-${VERSION}-macos-x86_64.tar.gz" ;;
           macOS-ARM64)   ASSET="licensor-${VERSION}-macos-aarch64.tar.gz" ;;
           Windows-X64)   ASSET="licensor-${VERSION}-windows-x86_64.zip" ;;
-          Windows-ARM64) ASSET="licensor-${VERSION}-windows-aarch64.zip" ;;
+          Windows-ARM64) echo "Windows ARM64 native releases are not available from GraalVM 21." >&2; exit 1 ;;
           *) echo "Unsupported runner: ${{ runner.os }}-${{ runner.arch }}" >&2; exit 1 ;;
         esac
 
