@@ -55,7 +55,6 @@ jobs:
             | macOS Intel | `licensor-${{ github.ref_name }}-macos-x86_64.tar.gz` |
             | macOS Apple Silicon | `licensor-${{ github.ref_name }}-macos-aarch64.tar.gz` |
             | Windows x64 | `licensor-${{ github.ref_name }}-windows-x86_64.zip` |
-            | Windows arm64 | `licensor-${{ github.ref_name }}-windows-aarch64.zip` |
 
             **Linux / macOS:** extract, add the folder to `PATH`, run `licensor --help`.
 
@@ -72,5 +71,4 @@ jobs:
             dist/licensor-${{ github.ref_name }}-macos-x86_64.tar.gz
             dist/licensor-${{ github.ref_name }}-macos-aarch64.tar.gz
             dist/licensor-${{ github.ref_name }}-windows-x86_64.zip
-            dist/licensor-${{ github.ref_name }}-windows-aarch64.zip
             dist/SHA256SUMS.txt

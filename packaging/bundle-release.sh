@@ -76,7 +76,6 @@ bundle_unix "linux-aarch64" "$STAGING/linux-aarch64" "licensor-aarch64-unknown-l
 bundle_unix "macos-x86_64" "$STAGING/macos-x86_64" "licensor-x86_64-apple-darwin"
 bundle_unix "macos-aarch64" "$STAGING/macos-aarch64" "licensor-aarch64-apple-darwin"
 bundle_windows "windows-x86_64" "$STAGING/windows-x86_64" "licensor-x86_64-pc-windows.exe"
-bundle_windows "windows-aarch64" "$STAGING/windows-aarch64" "licensor-aarch64-pc-windows.exe"
 
 (
   cd "$DIST"
