@@ -12,3 +12,12 @@ jobs:
     uses: ./.github/workflows/quality.yaml
     permissions:
       contents: read
+
+  native-smoke:
+    if: github.event_name == 'pull_request'
+    needs: quality
+    uses: ./.github/workflows/native-image.yaml
+    permissions:
+      contents: read
+    with:
+      matrix-json: '{"include":[{"os":"ubuntu-latest","bundle_id":"linux-x86_64","asset_name":"licensor-x86_64-unknown-linux-gnu","native_path":"target/native-image/licensor"}]}'

@@ -11,59 +11,33 @@ jobs:
     permissions:
       contents: read
 
+  native-image:
+    needs: quality
+    uses: ./.github/workflows/native-image.yaml
+    permissions:
+      contents: read
+
   publish:
     runs-on: ubuntu-latest
-    needs: quality
+    needs: native-image
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download platform bundle inputs
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
-          fetch-depth: 0
-
-      - name: Set up Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: sbt
-
-      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
-
-      - name: Build fat jar
-        run: sbt clean assembly
+          path: platform-staging
+          merge-multiple: false
 
       - name: Prepare release bundles
         shell: bash
         run: |
           set -euo pipefail
-
-          version="${GITHUB_REF_NAME}"
-
-          rm -rf dist
-          mkdir -p dist
-
-          # Jar
-          cp target/scala-*/licensor-assembly-*.jar dist/licensor.jar
-
-          # Launchers
-          cp packaging/licensor dist/licensor
-          chmod +x dist/licensor
-
-          cp packaging/licensor.cmd dist/licensor.cmd
-
-          # Archives
-          tar -C dist -czf "licensor-${version}-linux-x86_64.tar.gz" licensor licensor.jar
-          tar -C dist -czf "licensor-${version}-macos-universal.tar.gz" licensor licensor.jar
-          (cd dist && zip -q "../licensor-${version}-windows-x86_64.zip" licensor.cmd licensor.jar)
-
-          # Checksums
-          sha256sum \
-            "licensor-${version}-linux-x86_64.tar.gz" \
-            "licensor-${version}-macos-universal.tar.gz" \
-            "licensor-${version}-windows-x86_64.zip" \
-            > SHA256SUMS.txt
+          chmod +x packaging/bundle-release.sh
+          packaging/bundle-release.sh "${GITHUB_REF_NAME}" platform-staging
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
@@ -72,29 +46,31 @@ jobs:
           body: |
             ## Install
 
-            **Windows**
-            1. Download `licensor-${{ github.ref_name }}-windows-x86_64.zip`
-            2. Extract somewhere like `C:\Tools\licensor\`
-            3. Add that folder to `PATH`
-            4. Run: `licensor` (or `licensor.cmd`)
+            Each archive contains a platform-native GraalVM executable. Java is not required at runtime.
 
-            **macOS**
-            1. Download `licensor-${{ github.ref_name }}-macos-universal.tar.gz`
-            2. Extract: `tar -xzf licensor-${{ github.ref_name }}-macos-universal.tar.gz`
-            3. Move `licensor` + `licensor.jar` somewhere in `PATH` (e.g. `~/.local/bin`)
-            4. Run: `licensor --help`
+            | Platform | Archive |
+            |----------|---------|
+            | Linux x64 | `licensor-${{ github.ref_name }}-linux-x86_64.tar.gz` |
+            | Linux arm64 | `licensor-${{ github.ref_name }}-linux-aarch64.tar.gz` |
+            | macOS Intel | `licensor-${{ github.ref_name }}-macos-x86_64.tar.gz` |
+            | macOS Apple Silicon | `licensor-${{ github.ref_name }}-macos-aarch64.tar.gz` |
+            | Windows x64 | `licensor-${{ github.ref_name }}-windows-x86_64.zip` |
+            | Windows arm64 | `licensor-${{ github.ref_name }}-windows-aarch64.zip` |
 
-            **Linux**
-            1. Download `licensor-${{ github.ref_name }}-linux-x86_64.tar.gz`
-            2. Extract: `tar -xzf licensor-${{ github.ref_name }}-linux-x86_64.tar.gz`
-            3. Move `licensor` + `licensor.jar` somewhere in `PATH` (e.g. `~/.local/bin`)
-            4. Run: `licensor --help`
+            **Linux / macOS:** extract, add the folder to `PATH`, run `licensor --help`.
 
-            Integrity: download `SHA256SUMS.txt` and verify with `sha256sum -c SHA256SUMS.txt`.
+            **Windows:** extract, add the folder to `PATH`, run `licensor.exe`.
+
+            Verify with `SHA256SUMS.txt`.
+
+            Note: 32-bit Linux (x86) is not supported by this native release matrix.
 
             ---
           files: |
-            licensor-${{ github.ref_name }}-linux-x86_64.tar.gz
-            licensor-${{ github.ref_name }}-macos-universal.tar.gz
-            licensor-${{ github.ref_name }}-windows-x86_64.zip
-            SHA256SUMS.txt
+            dist/licensor-${{ github.ref_name }}-linux-x86_64.tar.gz
+            dist/licensor-${{ github.ref_name }}-linux-aarch64.tar.gz
+            dist/licensor-${{ github.ref_name }}-macos-x86_64.tar.gz
+            dist/licensor-${{ github.ref_name }}-macos-aarch64.tar.gz
+            dist/licensor-${{ github.ref_name }}-windows-x86_64.zip
+            dist/licensor-${{ github.ref_name }}-windows-aarch64.zip
+            dist/SHA256SUMS.txt

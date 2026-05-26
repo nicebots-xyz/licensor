@@ -74,11 +74,27 @@ File collection also applies `.gitignore` rules from the working directory by de
 - `0`: Success (check passes; add did nothing).
 - `1`: Failure (missing licenses in check, files updated in add, or no inputs matched).
 
+## Native binaries
+
+Tagged releases (`v*.*.*`) publish per-platform archives built in CI:
+
+- **Native executable** (`licensor` / `licensor.exe`) for fast cold start
+- No Java runtime is required to use the native archives
+
+Supported native targets: Linux (x64, arm64), macOS (Intel, Apple Silicon), Windows (x64, arm64). 32-bit Linux is not built.
+
+Local native build requires GraalVM on `JAVA_HOME` or `GRAALVM_HOME`:
+
+```bash
+sbt nativeImage
+# binary: target/native-image/licensor
+```
+
 ## GitHub Actions
 
 ### `setup-licensor`
 
-Downloads a licensor release and Temurin 21, then adds both to `PATH`.
+Downloads a native licensor release, verifies its checksum, then adds it to `PATH`.
 
 ```yaml
 - uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash>

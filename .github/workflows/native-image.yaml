@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MIT
+# Copyright: 2026 NiceBots.xyz
+name: Native Image
+on:
+  workflow_call:
+    inputs:
+      matrix-json:
+        description: JSON matrix for native-image builds.
+        required: false
+        default: '{"include":[{"os":"ubuntu-latest","bundle_id":"linux-x86_64","asset_name":"licensor-x86_64-unknown-linux-gnu","native_path":"target/native-image/licensor"},{"os":"ubuntu-24.04-arm","bundle_id":"linux-aarch64","asset_name":"licensor-aarch64-unknown-linux-gnu","native_path":"target/native-image/licensor"},{"os":"macos-15-intel","bundle_id":"macos-x86_64","asset_name":"licensor-x86_64-apple-darwin","native_path":"target/native-image/licensor"},{"os":"macos-latest","bundle_id":"macos-aarch64","asset_name":"licensor-aarch64-apple-darwin","native_path":"target/native-image/licensor"},{"os":"windows-latest","bundle_id":"windows-x86_64","asset_name":"licensor-x86_64-pc-windows.exe","native_path":"target/native-image/licensor.exe","vcvars_arch":"x64"},{"os":"windows-11-arm","bundle_id":"windows-aarch64","asset_name":"licensor-aarch64-pc-windows.exe","native_path":"target/native-image/licensor.exe","vcvars_arch":"arm64"}]}'
+        type: string
+  workflow_dispatch:
+    inputs:
+      matrix-json:
+        description: JSON matrix for native-image builds. Defaults to a Linux x64 smoke build.
+        required: false
+        default: '{"include":[{"os":"ubuntu-latest","bundle_id":"linux-x86_64","asset_name":"licensor-x86_64-unknown-linux-gnu","native_path":"target/native-image/licensor"}]}'
+
+permissions:
+  contents: read
+
+jobs:
+  native-image:
+    name: "${{ matrix.bundle_id }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(inputs['matrix-json']) }}
+
+    env:
+      JAVA_OPTS: -Xms2g -Xmx2g -Dfile.encoding=UTF-8
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up GraalVM
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: graalvm
+          java-version: "21"
+          check-latest: false
+          cache: sbt
+
+      - uses: sbt/setup-sbt@2e222825582620cc38d2a54e674f3c01b7c14f5d # v1.1.24
+        with:
+          disk-cache: false
+
+      - name: Setup Windows C++ toolchain
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-vcvars
+        with:
+          arch: ${{ matrix.vcvars_arch }}
+
+      - name: Build native image
+        shell: bash
+        run: sbt -v clean nativeImage
+
+      - name: Stage native binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${{ matrix.bundle_id }}"
+          rm -rf "$root"
+          mkdir -p "$root"
+          cp "${{ matrix.native_path }}" "$root/${{ matrix.asset_name }}"
+          chmod +x "$root/${{ matrix.asset_name }}"
+          "$root/${{ matrix.asset_name }}" --help >/dev/null
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.bundle_id }}
+          path: ${{ matrix.bundle_id }}
+          if-no-files-found: error

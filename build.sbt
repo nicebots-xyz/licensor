@@ -1,7 +1,22 @@
 val scala3Version = "3.8.3"
 
-lazy val root = (project in file(".")).enablePlugins(BuildInfoPlugin)
+lazy val root = (project in file("."))
+  .enablePlugins(BuildInfoPlugin, NativeImagePlugin)
   .settings(
+    nativeImageInstalled := true,
+    nativeImageGraalHome := {
+      val graalHome = sys.env
+        .get("GRAALVM_HOME")
+        .orElse(sys.env.get("JAVA_HOME"))
+        .getOrElse(sys.props("java.home"))
+      file(graalHome).toPath
+    },
+    nativeImageOptions ++= List(
+      "--no-fallback",
+      "-H:+ReportExceptionStackTraces",
+      "--initialize-at-build-time=org.slf4j,ch.qos.logback",
+      "-H:IncludeResources=logback.xml"
+    ),
     buildInfoPackage := "xyz.nicebots",
     buildInfoKeys    := Seq[BuildInfoKey](name, version),
     buildInfoObject   := "BuildInfo",

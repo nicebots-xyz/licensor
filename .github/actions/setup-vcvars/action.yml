@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MIT
+# Copyright: 2026 NiceBots.xyz
+name: Setup MSVC (vcvars)
+description: >
+  Configure the MSVC developer environment using vswhere and vcvarsall.bat from
+  the Visual Studio install on GitHub-hosted Windows runners. Avoids third-party
+  MSVC wrapper actions.
+
+inputs:
+  arch:
+    description: >
+      vcvarsall.bat architecture argument (e.g. x64, arm64, x86_arm64).
+      See https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Export vcvars environment
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $arch = '${{ inputs.arch }}'
+
+        $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+        if (-not (Test-Path $vswhere)) {
+          Write-Error "vswhere.exe not found at $vswhere"
+          exit 1
+        }
+
+        $installPath = & $vswhere -latest -products * -property installationPath
+        if (-not $installPath) {
+          Write-Error 'No Visual Studio installation found on runner'
+          exit 1
+        }
+
+        $vcvars = Join-Path $installPath 'VC\Auxiliary\Build\vcvarsall.bat'
+        if (-not (Test-Path $vcvars)) {
+          Write-Error "vcvarsall.bat not found at $vcvars (install Desktop development with C++)"
+          exit 1
+        }
+
+        Write-Host "Using vcvarsall.bat for arch=$arch"
+        cmd.exe /c "`"$vcvars`" $arch >nul && set" | ForEach-Object {
+          if ($_ -match '^(?<key>[^=]+)=(?<value>.*)$') {
+            "$($matches.key)=$($matches.value)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
+        }
