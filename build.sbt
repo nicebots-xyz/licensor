@@ -31,7 +31,7 @@ lazy val root = (project in file("."))
 
     libraryDependencies += "com.github.alexarchambault" %% "case-app"        % "2.2.0",
     libraryDependencies += "org.slf4j"                   % "slf4j-api"       % "2.0.20",
-    libraryDependencies += "ch.qos.logback"              % "logback-classic" % "1.6.6",
+    libraryDependencies += "ch.qos.logback"              % "logback-classic" % "1.6.7",
     libraryDependencies += "com.lihaoyi"                %% "fansi"           % "0.5.1",
     libraryDependencies += "com.lihaoyi"                %% "os-lib"          % "0.11.10",
     libraryDependencies += "org.yaml"                    % "snakeyaml"       % "2.7",
