@@ -102,10 +102,11 @@ Downloads a native licensor release, verifies its checksum, then adds it to `PAT
 
 | Input     | Required | Description                              |
 |-----------|----------|------------------------------------------|
-| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the action is pinned to. |
-| `token`   | no       | Token used to look up the tag of a commit pin. Defaults to `github.token`. |
+| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the action ships with. |
 
-Without `version`, the action installs the release it is pinned to: the tag itself (`@v1.2.3`), or the tag of the pinned commit, looked up through the GitHub API. A dependency bot that updates the pin then updates licensor with it. A commit that no release tag points at needs `version`.
+## Releasing
+
+Add a changelog entry to `.tegami/` (`pnpm tegami`). Tegami keeps a "Version Packages" pull request open, and merging it tags and publishes the release.
 
 ## Inspiration
 
