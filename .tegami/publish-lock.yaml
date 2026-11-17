@@ -1,0 +1,9 @@
+core:changelogs:
+  - content: "---\npackages:\n  licensor:\n    type: minor\n---\n\n### setup-licensor installs its own release by default\n\nThe `version` input of setup-licensor is optional: without it, the action installs the licensor release it ships with, so updating the action pin updates licensor too. Passing `version` still installs any release.\n"
+    filename: 2026-11-17-setup-licensor-default-version.md
+    v: 0.0.0
+core:packages:
+  - changelogIds:
+      - 2026-11-17-setup-licensor-default-version.md
+    id: release:licensor
+    updated: true

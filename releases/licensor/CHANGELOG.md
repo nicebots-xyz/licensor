@@ -1,7 +1,4 @@
----
-packages:
-  licensor: minor
----
+## licensor@0.2.0
 
 ### setup-licensor installs its own release by default
 
