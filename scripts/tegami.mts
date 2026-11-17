@@ -13,6 +13,7 @@ const paper = tegami({
   plugins: [
     licensor(),
     github({
+      release: false,
       versionPr: {
         base: "master",
         create: () => ({ title: versionTitle }),
