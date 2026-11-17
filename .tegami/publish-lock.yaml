@@ -1,9 +1,9 @@
 core:changelogs:
-  - content: "---\npackages:\n  licensor:\n    type: minor\n---\n\n### setup-licensor installs its own release by default\n\nThe `version` input of setup-licensor is optional: without it, the action installs the licensor release it ships with, so updating the action pin updates licensor too. Passing `version` still installs any release.\n"
-    filename: 2026-11-17-setup-licensor-default-version.md
+  - content: "---\npackages:\n  licensor:\n    type: patch\n---\n\n### Release binaries are attached again\n\nReleases are created as drafts, get their binaries, then are published, as immutable releases require. v0.2.0 has no binaries: use v0.2.1 or later.\n"
+    filename: 2026-11-17-immutable-releases.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-11-17-setup-licensor-default-version.md
+      - 2026-11-17-immutable-releases.md
     id: release:licensor
     updated: true
