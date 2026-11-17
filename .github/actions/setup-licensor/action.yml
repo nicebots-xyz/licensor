@@ -7,7 +7,7 @@ inputs:
   version:
     description: Licensor version to install (e.g. "v1.2.3"). Defaults to the release this action ships with.
     required: false
-    default: v0.2.0
+    default: v0.2.1
   repository:
     description: GitHub repository to download releases from (owner/repo).
     required: false
