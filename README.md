@@ -104,9 +104,6 @@ Downloads a native licensor release, verifies its checksum, then adds it to `PAT
 |-----------|----------|------------------------------------------|
 | `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the action ships with. |
 
-## Releasing
-
-Add a changelog entry to `.tegami/` (`pnpm tegami`). Tegami keeps a "Version Packages" pull request open, and merging it tags and publishes the release.
 
 ## Inspiration
 
