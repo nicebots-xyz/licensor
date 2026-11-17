@@ -102,13 +102,10 @@ Downloads a native licensor release, verifies its checksum, then adds it to `PAT
 
 | Input     | Required | Description                              |
 |-----------|----------|------------------------------------------|
-| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the pinned commit belongs to. |
+| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the action is pinned to. |
+| `token`   | no       | Token used to look up the tag of a commit pin. Defaults to `github.token`. |
 
-Pinning the action to a release commit picks that licensor release too, so a dependency bot that updates the pin updates licensor with it. Set `version` only to install another release than the one the action ships with.
-
-## Releasing
-
-Set the `version` default in `.github/actions/setup-licensor/action.yml` to the new version, commit, then push the `vX.Y.Z` tag on that commit. The release workflow fails before building anything when the default and the tag differ.
+Without `version`, the action installs the release it is pinned to: the tag itself (`@v1.2.3`), or the tag of the pinned commit, looked up through the GitHub API. A dependency bot that updates the pin then updates licensor with it. A commit that no release tag points at needs `version`.
 
 ## Inspiration
 

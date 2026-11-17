@@ -6,23 +6,64 @@ description: Download a native licensor release and add it to PATH.
 inputs:
   version:
     description: >-
-      Licensor version to install (e.g. "v1.2.3"). Defaults to the release this action ships with, so pinning the
-      action picks the licensor release too.
+      Licensor version to install (e.g. "v1.2.3"). Defaults to the release the action is pinned to, by tag or by the
+      commit of a tag.
     required: false
-    # The release workflow refuses a tag that does not match this default: bump it in the commit you tag.
-    default: v0.2.0
+    default: ""
   repository:
     description: GitHub repository to download releases from (owner/repo).
     required: false
     default: nicebots-xyz/licensor
+  token:
+    description: Token used to look up the tag of a commit pin.
+    required: false
+    default: ${{ github.token }}
 
 runs:
   using: composite
   steps:
-    - name: Download and install licensor
+    - name: Resolve the licensor version
+      id: version
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "$VERSION" ]]; then
+          # The runner fetches an action into _actions/<owner>/<repo>/<ref>/, so the pinned ref is in its path.
+          root="${GITHUB_ACTION_PATH//\\//}"
+          root="${root%/.github/actions/setup-licensor}"
+          ref="${root##*/}"
+          owner_repo="${root%/*}"
+          repo="${owner_repo##*/}"
+          owner_repo="${owner_repo%/*}"
+          repo="${owner_repo##*/}/${repo}"
+          semver='^v[0-9]+[.][0-9]+[.][0-9]+([-+][A-Za-z0-9._-]+)?$'
+
+          if [[ "$ref" =~ $semver ]]; then
+            VERSION="$ref"
+          elif [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+            VERSION="$(
+              gh api "repos/${repo}/tags" --paginate --jq ".[] | select(.commit.sha == \"${ref}\") | .name" \
+                | grep -E "$semver" | sort -V | tail -n 1 || true
+            )"
+          fi
+
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::setup-licensor is pinned to ${ref}, which is no ${repo} release: pin a release tag or its commit, or set the version input." >&2
+            exit 1
+          fi
+          echo "Pinned to ${ref}, installing licensor ${VERSION}."
+        fi
+
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Download and install licensor
+      shell: bash
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
       run: |
         set -euo pipefail
 
