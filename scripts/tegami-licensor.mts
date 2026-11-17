@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright: 2026 NiceBots.xyz
 
+import { randomUUID } from "node:crypto";
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { WorkspacePackage } from "tegami";
@@ -43,7 +44,13 @@ class LicensorPublishTask extends GitTagPublishTask<LicensorPackage> {
   async publish(opts: PublishTaskRunContext): Promise<PackagePublishTaskResult> {
     const result = await super.publish(opts);
     const output = process.env.GITHUB_OUTPUT;
-    if (result.type === "published" && output) await appendFile(output, `tag=v${this.pkg.version}\n`);
+    if (result.type !== "published" || !output) return result;
+
+    const notes = (opts.plan.packages.get(this.pkg.id)?.changelogs ?? [])
+      .flatMap((entry) => entry.sections.map(({ title, content }) => `### ${title}\n\n${content}`.trim()))
+      .join("\n\n");
+    const delimiter = `NOTES_${randomUUID()}`;
+    await appendFile(output, `tag=v${this.pkg.version}\nnotes<<${delimiter}\n${notes}\n${delimiter}\n`);
     return result;
   }
 }

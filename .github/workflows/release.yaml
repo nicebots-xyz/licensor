@@ -17,6 +17,7 @@ jobs:
       pull-requests: write
     outputs:
       tag: ${{ steps.tegami.outputs.tag }}
+      notes: ${{ steps.tegami.outputs.notes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -78,8 +79,11 @@ jobs:
         env:
           TAG: ${{ needs.tegami.outputs.tag }}
 
-      - name: Upload assets to the release
-        run: gh release upload "${TAG}" dist/* --clobber
+      - name: Create the release
+        run: |
+          gh release create "${TAG}" dist/* --draft --verify-tag --title "${TAG}" --notes "${NOTES}"
+          gh release edit "${TAG}" --draft=false
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.tegami.outputs.tag }}
+          NOTES: ${{ needs.tegami.outputs.notes }}
