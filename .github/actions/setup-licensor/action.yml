@@ -5,8 +5,12 @@ description: Download a native licensor release and add it to PATH.
 
 inputs:
   version:
-    description: Licensor version to install (e.g. "v1.2.3").
-    required: true
+    description: >-
+      Licensor version to install (e.g. "v1.2.3"). Defaults to the release this action ships with, so pinning the
+      action picks the licensor release too.
+    required: false
+    # The release workflow refuses a tag that does not match this default: bump it in the commit you tag.
+    default: v0.2.0
   repository:
     description: GitHub repository to download releases from (owner/repo).
     required: false

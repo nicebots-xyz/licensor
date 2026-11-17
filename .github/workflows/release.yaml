@@ -6,7 +6,27 @@ on:
     tags: [ "v*.*.*" ]
 
 jobs:
+  # setup-licensor installs its `version` default when no version is given, so a release must ship the action
+  # pointing at itself.
+  action-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the setup-licensor default version
+        shell: bash
+        run: |
+          set -euo pipefail
+          default="$(yq '.inputs.version.default' .github/actions/setup-licensor/action.yml)"
+          if [[ "$default" != "$GITHUB_REF_NAME" ]]; then
+            echo "::error file=.github/actions/setup-licensor/action.yml::The version default is $default, set it to $GITHUB_REF_NAME in the tagged commit."
+            exit 1
+          fi
+
   quality:
+    needs: action-version
     uses: ./.github/workflows/quality.yaml
     permissions:
       contents: read

@@ -97,16 +97,18 @@ sbt nativeImage
 Downloads a native licensor release, verifies its checksum, then adds it to `PATH`.
 
 ```yaml
-- uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash>
-  with:
-    version: v1.2.3
+- uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash> # v1.2.3
 ```
 
 | Input     | Required | Description                              |
 |-----------|----------|------------------------------------------|
-| `version` | yes      | Licensor version to install (e.g. `v1.2.3`). |
+| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the pinned commit belongs to. |
 
-The action pin (`@<commit-hash>`) and the `version` input are intentionally separate so you can security-pin the action to a specific commit while still choosing which licensor release to download.
+Pinning the action to a release commit picks that licensor release too, so a dependency bot that updates the pin updates licensor with it. Set `version` only to install another release than the one the action ships with.
+
+## Releasing
+
+Set the `version` default in `.github/actions/setup-licensor/action.yml` to the new version, commit, then push the `vX.Y.Z` tag on that commit. The release workflow fails before building anything when the default and the tag differ.
 
 ## Inspiration
 
