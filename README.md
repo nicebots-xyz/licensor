@@ -97,16 +97,13 @@ sbt nativeImage
 Downloads a native licensor release, verifies its checksum, then adds it to `PATH`.
 
 ```yaml
-- uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash>
-  with:
-    version: v1.2.3
+- uses: nicebots-xyz/licensor/.github/actions/setup-licensor@<commit-hash> # v1.2.3
 ```
 
 | Input     | Required | Description                              |
 |-----------|----------|------------------------------------------|
-| `version` | yes      | Licensor version to install (e.g. `v1.2.3`). |
+| `version` | no       | Licensor version to install (e.g. `v1.2.3`). Defaults to the release the action ships with. |
 
-The action pin (`@<commit-hash>`) and the `version` input are intentionally separate so you can security-pin the action to a specific commit while still choosing which licensor release to download.
 
 ## Inspiration
 

@@ -5,8 +5,9 @@ description: Download a native licensor release and add it to PATH.
 
 inputs:
   version:
-    description: Licensor version to install (e.g. "v1.2.3").
-    required: true
+    description: Licensor version to install (e.g. "v1.2.3"). Defaults to the release this action ships with.
+    required: false
+    default: v0.1.2
   repository:
     description: GitHub repository to download releases from (owner/repo).
     required: false
