@@ -76,14 +76,15 @@ File collection also applies `.gitignore` rules from the working directory by de
 
 ## Native binaries
 
-Tagged releases (`v*.*.*`) publish per-platform archives built in CI:
+Releases are published as follows:
 
 - **Native executable** (`licensor` / `licensor.exe`) for fast cold start
 - No Java runtime is required to use the native archives
 
-Supported native targets: Linux (x64, arm64), macOS (Intel, Apple Silicon), and Windows x64. Windows ARM64 is not built because GraalVM 21 is not published for that runner architecture.
-
-Local native build requires GraalVM on `JAVA_HOME` or `GRAALVM_HOME`:
+Supported native targets: 
+- Linux (x64, arm64)
+- macOS (Intel, Apple Silicon)
+- Windows x64
 
 ```bash
 sbt nativeImage
