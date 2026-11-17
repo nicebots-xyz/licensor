@@ -43,5 +43,5 @@ build/
 ### Scala ###
 .bsp/
 
-### Node (release tooling) ###
+# release tooling
 node_modules/
