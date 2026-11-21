@@ -2,7 +2,7 @@
   "private": true,
   "description": "Release tooling for licensor (changelogs and versioning via Tegami). Not a Node project.",
   "type": "module",
-  "packageManager": "pnpm@12.20.0",
+  "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": ">=24"
   },
